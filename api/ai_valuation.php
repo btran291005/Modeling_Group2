@@ -123,7 +123,7 @@ try {
     // Lưu quy tắc đã áp dụng vào bảng junction
     if (!empty($activeRules)) {
         $stmtJunction = $pdo->prepare("
-            INSERT IGNORE INTO session_rules (session_id, rule_id) VALUES (:sid, :rid)
+            INSERT IGNORE INTO session_rule_details (session_id, rule_id) VALUES (:sid, :rid)
         ");
         foreach ($activeRules as $rule) {
             $stmtJunction->execute([':sid' => $sessionId, ':rid' => $rule['rule_id']]);
@@ -159,4 +159,5 @@ exit(json_encode([
     'device_name'     => $device['brand_name'] . ' ' . $device['model_name'],
     'battery_health'  => $batteryHealth,
     'rules_applied'   => count($activeRules),
+    'fallback'        => $aiResult['fallback'] ?? false,
 ]));

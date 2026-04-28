@@ -1,0 +1,360 @@
+/* ============================================================
+   assets/css/pages/staff/history.css
+   Styles riêng cho trang Lịch sử định giá của Staff
+   ============================================================ */
+
+/* ===== SUMMARY BAR ===== */
+.history-summary-bar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl);
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+    row-gap: 0.75rem;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 0 1.5rem;
+}
+
+.summary-num {
+    font-family: var(--font-display);
+    font-size: 1.625rem;
+    font-weight: 800;
+    color: var(--text-light);
+    letter-spacing: -0.03em;
+    line-height: 1;
+}
+
+.summary-num--lg {
+    font-size: 1.25rem;
+}
+
+.summary-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    text-align: center;
+}
+
+.summary-item--green .summary-num { color: var(--success); }
+.summary-item--red   .summary-num { color: var(--danger); }
+.summary-item--yellow .summary-num { color: var(--warning); }
+.summary-item--blue  .summary-num { color: var(--primary-blue); }
+
+.summary-divider {
+    width: 1px;
+    height: 32px;
+    background: var(--border-subtle);
+    flex-shrink: 0;
+}
+
+.summary-divider--grow {
+    flex: 1;
+    width: auto;
+    height: 1px;
+    background: transparent;
+}
+
+/* ===== FILTER CARD ===== */
+.history-filter-card {
+    margin-bottom: 1.25rem;
+}
+
+.filter-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+/* Search input */
+.search-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+    max-width: 400px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+.search-input {
+    padding-left: 2.25rem !important;
+    padding-right: 2rem;
+}
+
+.search-clear {
+    position: absolute;
+    right: 0.625rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0.1rem 0.3rem;
+    border-radius: var(--radius-sm);
+    transition: color var(--transition-fast), background var(--transition-fast);
+}
+.search-clear:hover { color: var(--text-light); background: var(--bg-hover); }
+
+/* Filter status buttons */
+.filter-status-group {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    flex-wrap: wrap;
+}
+
+.filter-status-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.875rem;
+    border-radius: var(--radius-full);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    text-decoration: none;
+    border: 1px solid var(--border-default);
+    color: var(--text-secondary);
+    background: transparent;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.filter-status-btn:hover { border-color: var(--border-strong); color: var(--text-light); }
+
+.filter-btn--all.active     { background: var(--bg-elevated); border-color: var(--border-strong); color: var(--text-light); }
+.filter-btn--green.active   { background: var(--success-subtle); border-color: var(--success); color: var(--success); }
+.filter-btn--red.active     { background: var(--danger-subtle); border-color: var(--danger); color: var(--danger); }
+.filter-btn--yellow.active  { background: var(--warning-subtle, rgba(251,191,36,0.12)); border-color: var(--warning); color: var(--warning); }
+.filter-btn--purple.active  { background: rgba(139,92,246,0.12); border-color: #8B5CF6; color: #8B5CF6; }
+
+/* ===== BẢNG ===== */
+.device-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+.device-brand {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+.device-model {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-light);
+}
+.photo-count-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 1px;
+}
+
+.customer-mini {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    font-size: 0.875rem;
+}
+
+/* Battery mini */
+.battery-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+}
+.bat-bar-mini {
+    height: 4px;
+    border-radius: 2px;
+    min-width: 40px;
+    max-width: 56px;
+    transition: width 0.3s;
+}
+.bat-good  { background: var(--success); }
+.bat-ok    { background: var(--warning); }
+.bat-low   { background: var(--danger); }
+
+/* Giá */
+.price-cell {
+    color: var(--success);
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+/* IMEI truncated */
+.imei-cell {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    cursor: help;
+}
+
+/* Nút chi tiết */
+.btn-detail {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: border-color var(--transition-fast), color var(--transition-fast), background var(--transition-fast);
+}
+.btn-detail:hover {
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+    background: var(--primary-subtle);
+}
+
+/* ===== PAGINATION ===== */
+.pagination-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 0.5rem;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    text-decoration: none;
+    color: var(--text-secondary);
+    background: transparent;
+    transition: all var(--transition-fast);
+}
+.page-btn:hover { border-color: var(--primary-blue); color: var(--primary-blue); }
+.page-btn.active { background: var(--primary-blue); border-color: var(--primary-blue); color: #fff; }
+
+.page-ellipsis {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    padding: 0 0.25rem;
+}
+
+.pagination-info {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+}
+
+/* ===== MODAL CHI TIẾT ===== */
+.modal-detail {
+    max-width: 540px;
+}
+
+.detail-section {
+    margin-bottom: 1.25rem;
+}
+
+.detail-section-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin-bottom: 0.625rem;
+}
+
+.detail-device-name {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--text-light);
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 0.625rem 0.875rem;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+}
+
+.detail-key {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+}
+
+.detail-val {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-light);
+}
+
+.detail-val--price {
+    color: var(--primary-blue);
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.detail-customer-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 900px) {
+    .history-summary-bar {
+        gap: 0.5rem;
+    }
+    .summary-item { padding: 0 0.75rem; }
+    .summary-divider--grow { display: none; }
+    .filter-row { gap: 0.5rem; }
+    .search-wrap { max-width: 100%; }
+}
+
+@media (max-width: 700px) {
+    /* Ẩn cột phụ */
+    .data-table th:nth-child(3),
+    .data-table td:nth-child(3),
+    .data-table th:nth-child(6),
+    .data-table td:nth-child(6) {
+        display: none;
+    }
+    .detail-grid,
+    .detail-customer-row {
+        grid-template-columns: 1fr;
+    }
+}

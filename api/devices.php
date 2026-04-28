@@ -20,16 +20,38 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../config/db_connect.php';
 
-// Chỉ nhận POST
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'message' => 'Method not allowed.']);
-    exit;
-}
-
 header('Content-Type: application/json; charset=utf-8');
 
-// Tất cả actions trong file này đều yêu cầu Admin
+// ---- GET: Staff tra cứu dòng máy theo hãng (dùng trong trang valuation) ----
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    requireLogin();
+    $action = trim($_GET['action'] ?? '');
+    if ($action === 'get_models') {
+        $brandId = (int) ($_GET['brand_id'] ?? 0);
+        if (!$brandId) {
+            exit(json_encode(['success' => false, 'models' => []]));
+        }
+        $stmt = $pdo->prepare("
+            SELECT model_id, model_name, ram_gb, rom_gb, base_price
+            FROM device_models
+            WHERE brand_id = ?
+            ORDER BY model_name ASC
+        ");
+        $stmt->execute([$brandId]);
+        $models = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        exit(json_encode(['success' => true, 'models' => $models]));
+    }
+    http_response_code(400);
+    exit(json_encode(['success' => false, 'message' => 'Action không hợp lệ.']));
+}
+
+// ---- POST: Chỉ Admin mới được dùng các actions bên dưới ----
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    exit(json_encode(['success' => false, 'message' => 'Method not allowed.']));
+}
+
+// Tất cả POST actions trong file này đều yêu cầu Admin
 requireAdmin();
 
 $action = trim($_POST['action'] ?? '');

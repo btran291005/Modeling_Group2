@@ -82,6 +82,24 @@ function requireStaff(): void
 }
 
 /**
+ * Yêu cầu role cụ thể - hàm chung cho mọi role
+ * Dùng thay thế cho requireAdmin() / requireStaff() khi cần linh hoạt
+ * @param string $role  Role yêu cầu: 'Admin' hoặc 'Staff'
+ */
+function requireRole(string $role): void
+{
+    requireLogin();
+    if (($_SESSION['role'] ?? '') !== $role) {
+        // Redirect về dashboard phù hợp với role thực của user
+        $redirect = ($_SESSION['role'] ?? '') === 'Admin'
+            ? 'admin/dashboard.php'
+            : 'staff/dashboard.php';
+        header('Location: ' . $redirect . '?reason=forbidden');
+        exit;
+    }
+}
+
+/**
  * Lấy thông tin user hiện tại từ Session
  * @return array ['user_id', 'full_name', 'email', 'role']
  */

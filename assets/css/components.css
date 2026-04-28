@@ -874,3 +874,295 @@
         transform: translateY(0);
     }
 }
+
+/* ============================================================
+   PHẦN BỔ SUNG — cho trang Admin (accounts, inventory, valuation_log)
+   ============================================================ */
+
+/* ---- Filter Bar ---- */
+.filter-bar {
+    padding: var(--space-4) var(--space-6);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.filter-form {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: nowrap;       /* Giữ 1 hàng trên desktop */
+}
+
+/* Tất cả select trong filter bar: width tự động, không full */
+.filter-form .form-select {
+    width: auto;
+    min-width: 150px;
+    flex-shrink: 0;
+}
+
+/* Nút trong filter bar */
+.filter-form .btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.filter-search {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    background: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 0 var(--space-3);
+    flex: 1;
+    min-width: 200px;
+    max-width: 340px;
+    transition: border-color var(--transition-fast);
+}
+
+.filter-search:focus-within {
+    border-color: var(--border-primary);
+}
+
+.filter-search svg {
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.filter-search .form-input {
+    background: transparent;
+    border: none;
+    padding-left: 0;
+    padding-right: 0;
+    width: 100%;
+}
+
+.filter-search .form-input:focus {
+    box-shadow: none;
+    border-color: transparent;
+}
+
+/* Responsive: cho phép wrap khi màn hình nhỏ */
+@media (max-width: 900px) {
+    .filter-form {
+        flex-wrap: wrap;
+    }
+    .filter-search {
+        max-width: 100%;
+        flex: 1 1 100%;
+    }
+    .filter-form .form-select {
+        flex: 1 1 auto;
+    }
+}
+
+/* ---- Action buttons group ---- */
+.action-btns {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+/* ---- Button sizes bổ sung ---- */
+.btn-xs {
+    padding: 4px 10px;
+    font-size: 12px;
+    border-radius: var(--radius-sm);
+    height: 28px;
+    gap: 4px;
+}
+
+.btn-danger-ghost {
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid transparent;
+}
+
+.btn-danger-ghost:hover {
+    background: var(--danger-subtle);
+    border-color: var(--danger);
+}
+
+.btn-success-ghost {
+    background: transparent;
+    color: var(--success);
+    border: 1px solid transparent;
+}
+
+.btn-success-ghost:hover {
+    background: var(--success-subtle);
+    border-color: var(--success);
+}
+
+/* ---- User cell (avatar + name) ---- */
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+/* ---- Battery / Progress cell ---- */
+.battery-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.progress-bar-wrap {
+    height: 6px;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    border-radius: var(--radius-full);
+    transition: width 0.3s ease;
+}
+
+.progress-bar-fill.green  { background: var(--success); }
+.progress-bar-fill.yellow { background: var(--warning); }
+.progress-bar-fill.red    { background: var(--danger); }
+
+/* ---- Table cell helpers ---- */
+.td-muted  { color: var(--text-muted); }
+.td-secondary { color: var(--text-secondary); }
+
+/* ---- Pagination wrapper ---- */
+.pagination-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-4) var(--space-6);
+    border-top: 1px solid var(--border-subtle);
+    gap: var(--space-4);
+}
+
+.pagination-info {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+/* ---- Toast notification ---- */
+.toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 12px 20px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 9999;
+    box-shadow: var(--shadow-lg);
+    animation: toastSlideIn 0.3s ease;
+    max-width: 360px;
+}
+
+@keyframes toastSlideIn {
+    from { transform: translateY(16px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+}
+
+.toast-success {
+    background: var(--success);
+    color: #fff;
+}
+
+.toast-error {
+    background: var(--danger);
+    color: #fff;
+}
+
+.toast-info {
+    background: var(--primary-blue);
+    color: #fff;
+}
+
+/* ---- Modal class alias (.modal = .modal-box) ---- */
+.modal {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-xl);
+    width: 90%;
+    max-width: 520px;
+    box-shadow: var(--shadow-lg);
+    animation: modalFadeIn 0.25s ease;
+    overflow: hidden;
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; transform: translateY(-16px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+/* ---- Input password wrapper ---- */
+.input-password-wrap {
+    position: relative;
+}
+
+.input-password-wrap .form-input {
+    padding-right: 44px;
+}
+
+.input-password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--text-muted);
+    padding: 0;
+    line-height: 1;
+}
+
+.input-password-toggle:hover {
+    color: var(--text-light);
+}
+
+/* ---- Alert variants ---- */
+.alert {
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    border: 1px solid transparent;
+}
+
+.alert-danger {
+    background: var(--danger-subtle);
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+.alert-success {
+    background: var(--success-subtle);
+    border-color: var(--success);
+    color: var(--success);
+}
+
+.alert-info {
+    background: var(--info-subtle);
+    border-color: var(--info);
+    color: var(--info);
+}
+
+/* ---- Required marker ---- */
+.required {
+    color: var(--danger);
+}
+
+/* ---- Stats grid 3 cột shorthand ---- */
+.stats-grid-3 {
+    grid-template-columns: repeat(3, 1fr) !important;
+}
+
+@media (max-width: 768px) {
+    .stats-grid-3 { grid-template-columns: 1fr !important; }
+}
+
+/* ---- device-cell ---- */
+.device-cell { display: flex; flex-direction: column; gap: 2px; }
+.staff-cell  { display: flex; align-items: center; gap: 8px; }

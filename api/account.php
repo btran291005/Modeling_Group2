@@ -16,6 +16,30 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../config/db_connect.php';
 
+header('Content-Type: application/json; charset=utf-8');
+
+// ---- GET: Staff tra cứu khách hàng theo số điện thoại ----
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    requireLogin();
+    $action = trim($_GET['action'] ?? '');
+    if ($action === 'lookup_customer') {
+        $phone = trim($_GET['phone'] ?? '');
+        if (empty($phone)) {
+            exit(json_encode(['found' => false]));
+        }
+        $stmt = $pdo->prepare("SELECT full_name FROM customers WHERE phone_number = ? LIMIT 1");
+        $stmt->execute([$phone]);
+        $customer = $stmt->fetch();
+        if ($customer) {
+            exit(json_encode(['found' => true, 'full_name' => $customer['full_name']]));
+        }
+        exit(json_encode(['found' => false]));
+    }
+    http_response_code(400);
+    exit(json_encode(['success' => false, 'message' => 'Action không hợp lệ.']));
+}
+
+// ---- POST: Xử lý các actions bên dưới ----
 // Chỉ nhận POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sendJson(false, 'Method not allowed.', 405);
