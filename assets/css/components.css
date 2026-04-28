@@ -723,3 +723,154 @@
     transform: translateY(-1px);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
+
+/* ============================================================
+ * 16. MODAL SYSTEM
+ * ============================================================ */
+
+/* --- Overlay (backdrop cố định toàn màn hình) --- */
+.modal-overlay {
+    position: fixed;
+    inset: 0;                                   /* top/right/bottom/left = 0 */
+    z-index: var(--z-modal);
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4);
+
+    /* Ẩn mặc định */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--transition-normal), visibility var(--transition-normal);
+}
+
+/* Khi active: hiện ra */
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* --- Modal Box (hộp nội dung) --- */
+.modal-box {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255,255,255,0.04);
+    width: 100%;
+    max-height: calc(100vh - var(--space-8));
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    /* Animation trượt lên khi mở */
+    transform: translateY(24px) scale(0.97);
+    transition: transform var(--transition-normal);
+}
+
+.modal-overlay.active .modal-box {
+    transform: translateY(0) scale(1);
+}
+
+/* Kích thước preset */
+.modal-xs  { max-width: 340px; }
+.modal-sm  { max-width: 440px; }
+.modal-md  { max-width: 580px; }
+.modal-lg  { max-width: 720px; }
+.modal-xl  { max-width: 900px; }
+
+/* --- Modal Header --- */
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+    gap: var(--space-3);
+}
+
+.modal-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-light);
+    letter-spacing: -0.01em;
+    margin: 0;
+}
+
+.modal-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-md);
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.modal-close:hover {
+    background: var(--bg-hover);
+    color: var(--text-light);
+}
+
+/* --- Modal Body --- */
+.modal-body {
+    padding: var(--space-5);
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* --- Modal Footer --- */
+.modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    border-top: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+    background: var(--bg-elevated);
+}
+
+/* --- Modal Header Variants --- */
+.modal-header-danger {
+    border-bottom-color: rgba(239, 68, 68, 0.25);
+}
+
+.modal-header-danger .modal-title {
+    color: var(--danger);
+}
+
+.modal-header-success {
+    border-bottom-color: rgba(34, 197, 94, 0.25);
+}
+
+.modal-header-success .modal-title {
+    color: var(--success);
+}
+
+/* --- Responsive: full-screen trên mobile --- */
+@media (max-width: 480px) {
+    .modal-overlay {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .modal-box {
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        max-height: 90vh;
+        transform: translateY(100%);
+    }
+
+    .modal-overlay.active .modal-box {
+        transform: translateY(0);
+    }
+}

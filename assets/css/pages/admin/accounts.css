@@ -1,0 +1,567 @@
+/* ============================================================
+   assets/css/pages/admin/accounts.css
+   Styles riêng cho trang Quản lý Tài khoản (admin/accounts.php)
+   Bổ sung: Modal system, Toast notifications, Table variants
+   ============================================================ */
+
+
+/* ============================================================
+ * 1. PAGE HEADER
+ * ============================================================ */
+
+.accounts-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-5);
+    flex-wrap: wrap;
+}
+
+.accounts-header .btn {
+    flex-shrink: 0;
+}
+
+
+/* ============================================================
+ * 2. FILTER BAR
+ * ============================================================ */
+
+.accounts-filter-card {
+    margin-bottom: var(--space-4);
+}
+
+.accounts-filter-card .card-body {
+    padding: var(--space-4) var(--space-5);
+}
+
+.filter-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+}
+
+/* Search wrapper */
+.filter-search {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+}
+
+.filter-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+    transition: color var(--transition-fast);
+}
+
+.filter-search:focus-within .filter-search-icon {
+    color: var(--primary-blue);
+}
+
+.filter-search-input {
+    padding-left: 38px;
+    min-height: 40px;
+}
+
+/* Filter select */
+.filter-select {
+    min-width: 160px;
+    min-height: 40px;
+    padding-top: 9px;
+    padding-bottom: 9px;
+}
+
+
+/* ============================================================
+ * 3. TABLE — tài khoản
+ * ============================================================ */
+
+/* Wrapper card có loading overlay */
+.card {
+    position: relative;
+}
+
+/* Loading overlay */
+.table-loading {
+    position: absolute;
+    inset: 0;
+    background: rgba(26, 29, 46, 0.75);
+    backdrop-filter: blur(3px);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    z-index: 10;
+    border-radius: var(--radius-xl);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.table-loading.visible {
+    display: flex;
+}
+
+.table-loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--bg-elevated);
+    border-top-color: var(--primary-blue);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* User cell (avatar + name + email) */
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.user-avatar-sm {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+    letter-spacing: 0.01em;
+}
+
+.avatar-admin {
+    background: linear-gradient(135deg, var(--primary-blue), #6366F1);
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+}
+
+.avatar-staff {
+    background: linear-gradient(135deg, #374151, #4B5563);
+}
+
+.user-cell-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.user-cell-name {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--text-light);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.user-cell-email {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 220px;
+}
+
+/* Badge "Bạn" (Self indicator) */
+.badge-self {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 7px;
+    background: var(--primary-subtle);
+    border: 1px solid var(--border-primary);
+    color: var(--primary-blue);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    border-radius: var(--radius-full);
+    letter-spacing: 0.03em;
+}
+
+/* Locked row — visual dim */
+.row-locked {
+    opacity: 0.65;
+}
+
+.row-locked:hover {
+    opacity: 0.85;
+}
+
+/* Ghost danger button */
+.btn-ghost-danger {
+    color: var(--text-muted);
+}
+
+.btn-ghost-danger:hover {
+    color: var(--danger);
+    background: var(--danger-subtle);
+}
+
+/* Warning button */
+.btn-warning {
+    background: var(--warning-subtle);
+    color: var(--warning);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.btn-warning:hover {
+    background: var(--warning);
+    color: #fff;
+}
+
+
+/* ============================================================
+ * 4. MODAL SYSTEM
+ * ============================================================ */
+
+/* Backdrop */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    z-index: var(--z-modal);
+    display: none;            /* Ẩn mặc định */
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4);
+}
+
+.modal-backdrop.visible {
+    display: flex;
+    animation: backdrop-in 0.2s ease;
+}
+
+@keyframes backdrop-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* Modal box */
+.modal {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-xl);
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-lg), 0 0 60px rgba(0, 0, 0, 0.5);
+    animation: modal-in 0.25s ease;
+
+    /* Custom scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-default) transparent;
+}
+
+.modal-sm {
+    max-width: 440px;
+}
+
+@keyframes modal-in {
+    from { opacity: 0; transform: translateY(12px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Modal Header */
+.modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: var(--space-5) var(--space-5) var(--space-4);
+    border-bottom: 1px solid var(--border-subtle);
+    gap: var(--space-3);
+}
+
+.modal-title-wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+}
+
+/* Icon màu trong modal header */
+.modal-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.modal-icon-blue   { background: var(--primary-subtle);  color: var(--primary-blue); border: 1px solid var(--border-primary); }
+.modal-icon-green  { background: var(--success-subtle);  color: var(--success);      border: 1px solid rgba(34,197,94,.25); }
+.modal-icon-yellow { background: var(--warning-subtle);  color: var(--warning);      border: 1px solid rgba(245,158,11,.25); }
+.modal-icon-red    { background: var(--danger-subtle);   color: var(--danger);       border: 1px solid rgba(239,68,68,.25); }
+
+.modal-title {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-light);
+    letter-spacing: -0.01em;
+    margin-bottom: 2px;
+}
+
+.modal-subtitle {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+}
+
+/* Nút đóng X */
+.modal-close {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.modal-close:hover {
+    background: var(--bg-hover);
+    color: var(--text-light);
+}
+
+/* Modal Body */
+.modal-body {
+    padding: var(--space-5);
+}
+
+/* Modal Footer */
+.modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    border-top: 1px solid var(--border-subtle);
+    background: var(--bg-elevated);
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+}
+
+/* Password input với toggle button */
+.password-input-wrap {
+    position: relative;
+}
+
+.password-input-wrap .form-input {
+    padding-right: 40px;
+}
+
+.toggle-pass-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    padding: 4px;
+    border-radius: 4px;
+    transition: color var(--transition-fast);
+    display: flex;
+    align-items: center;
+}
+
+.toggle-pass-btn:hover {
+    color: var(--text-light);
+}
+
+
+/* ============================================================
+ * 5. DELETE CONFIRM BOX
+ * ============================================================ */
+
+.delete-confirm-box {
+    text-align: center;
+    padding: var(--space-4) 0;
+}
+
+.delete-confirm-icon {
+    font-size: 2.5rem;
+    margin-bottom: var(--space-4);
+    line-height: 1;
+}
+
+.delete-confirm-text {
+    font-size: 0.9375rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-3);
+    line-height: 1.6;
+}
+
+.delete-confirm-text strong {
+    display: block;
+    font-size: 1rem;
+    font-family: var(--font-mono);
+    color: var(--danger);
+    margin-top: var(--space-2);
+    word-break: break-all;
+}
+
+.delete-confirm-sub {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    max-width: 340px;
+    margin: 0 auto;
+}
+
+
+/* ============================================================
+ * 6. TOAST NOTIFICATIONS
+ * ============================================================ */
+
+.toast-container {
+    position: fixed;
+    bottom: var(--space-6);
+    right: var(--space-6);
+    z-index: var(--z-toast);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    pointer-events: none;
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 12px 18px;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 500;
+    min-width: 280px;
+    max-width: 400px;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid transparent;
+    pointer-events: all;
+
+    /* Animation: slide từ phải vào */
+    opacity: 0;
+    transform: translateX(20px);
+    transition: all 0.3s ease;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.toast-success {
+    background: var(--success-subtle);
+    border-color: rgba(34, 197, 94, 0.3);
+    color: var(--success);
+}
+
+.toast-danger {
+    background: var(--danger-subtle);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: var(--danger);
+}
+
+.toast-warning {
+    background: var(--warning-subtle);
+    border-color: rgba(245, 158, 11, 0.3);
+    color: var(--warning);
+}
+
+.toast-info {
+    background: var(--primary-subtle);
+    border-color: var(--border-primary);
+    color: var(--primary-blue);
+}
+
+
+/* ============================================================
+ * 7. RESPONSIVE
+ * ============================================================ */
+
+@media (max-width: 900px) {
+    .accounts-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .accounts-header .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .filter-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-search,
+    .filter-select {
+        width: 100%;
+        min-width: auto;
+    }
+
+    /* Ẩn cột phụ trên tablet */
+    .data-table th:nth-child(3),
+    .data-table td:nth-child(3) {
+        display: none;
+    }
+}
+
+@media (max-width: 640px) {
+    .modal-backdrop {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .modal {
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        max-height: 85vh;
+        animation: modal-up 0.3s ease;
+    }
+
+    @keyframes modal-up {
+        from { transform: translateY(100%); }
+        to   { transform: translateY(0); }
+    }
+
+    .toast-container {
+        right: var(--space-3);
+        left: var(--space-3);
+        bottom: var(--space-4);
+    }
+
+    .toast {
+        min-width: auto;
+        max-width: 100%;
+    }
+
+    /* Ẩn thêm cột trên mobile */
+    .data-table th:nth-child(4),
+    .data-table td:nth-child(4) {
+        display: none;
+    }
+
+    /* Action buttons thu gọn trên mobile — chỉ icon */
+    .action-edit span,
+    .action-toggle-status span {
+        display: none;
+    }
+}
