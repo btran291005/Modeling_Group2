@@ -1,0 +1,478 @@
+/* assets/css/pages/login.css
+   Giao diện Trang Đăng nhập - Dark Mode Admin Portal
+    */
+
+/* ---------- Layout Toàn Trang ---------- */
+.login-page {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    overflow: hidden;
+}
+
+/* ---------- Cột Trái - Visual Panel ---------- */
+.login-visual {
+    position: relative;
+    background: var(--bg-surface);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: var(--space-12);
+    overflow: hidden;
+}
+
+/* Hiệu ứng lưới nền */
+.login-visual::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(59, 130, 246, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(59, 130, 246, 0.06) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+}
+
+/* Vòng tròn glow trang trí */
+.login-visual::after {
+    content: '';
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.18) 0%, transparent 70%);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.visual-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    max-width: 420px;
+}
+
+.visual-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-10);
+}
+
+.logo-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--primary-blue), #6366F1);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-blue);
+    font-size: 1.5rem;
+}
+
+.logo-text {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text-light);
+    letter-spacing: -0.02em;
+}
+
+.logo-text span {
+    color: var(--primary-blue);
+}
+
+.visual-headline {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.2;
+    color: var(--text-light);
+    letter-spacing: -0.03em;
+    margin-bottom: var(--space-4);
+}
+
+.visual-headline em {
+    font-style: normal;
+    background: linear-gradient(90deg, var(--primary-blue), #818CF8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.visual-desc {
+    font-size: 0.9375rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: var(--space-10);
+}
+
+/* Các thẻ tính năng nhỏ */
+.feature-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    justify-content: center;
+}
+
+.feature-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-full);
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.feature-pill .pill-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--primary-blue);
+    box-shadow: 0 0 6px var(--primary-blue);
+    animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.6; transform: scale(0.8); }
+}
+
+/* ---------- Cột Phải - Form Panel ---------- */
+.login-form-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: var(--space-12) var(--space-10);
+    background: var(--bg-dark);
+    position: relative;
+}
+
+/* Đường viền gradient trái */
+.login-form-panel::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 10%;
+    bottom: 10%;
+    width: 1px;
+    background: linear-gradient(
+        to bottom,
+        transparent,
+        var(--border-primary),
+        transparent
+    );
+}
+
+.login-form-container {
+    width: 100%;
+    max-width: 400px;
+}
+
+/* ---------- Header Form ---------- */
+.form-header {
+    margin-bottom: var(--space-8);
+}
+
+.form-header-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--primary-blue);
+    margin-bottom: var(--space-3);
+}
+
+.form-header-eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 20px;
+    height: 2px;
+    background: var(--primary-blue);
+    border-radius: 2px;
+}
+
+.form-header h1 {
+    font-size: 1.875rem;
+    font-weight: 800;
+    color: var(--text-light);
+    letter-spacing: -0.03em;
+    margin-bottom: var(--space-2);
+}
+
+.form-header p {
+    font-size: 0.9375rem;
+    color: var(--text-secondary);
+}
+
+/* ---------- Form Body ---------- */
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.form-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    letter-spacing: 0.01em;
+}
+
+/* Input với icon */
+.input-wrapper {
+    position: relative;
+}
+
+.input-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+    transition: color var(--transition-fast);
+}
+
+.input-wrapper .form-input {
+    padding-left: 42px;
+}
+
+.input-wrapper:focus-within .input-icon {
+    color: var(--primary-blue);
+}
+
+/* Toggle hiển thị mật khẩu */
+.toggle-password {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 4px;
+    border-radius: 4px;
+    transition: color var(--transition-fast);
+}
+
+.toggle-password:hover {
+    color: var(--text-light);
+}
+
+/* ---------- Thông báo lỗi ---------- */
+.login-alert {
+    padding: 12px 16px;
+    background: var(--danger-subtle);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: var(--radius-md);
+    color: var(--danger);
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    animation: slide-down 0.25s ease;
+    
+}
+
+@keyframes slide-down {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- Nút Đăng Nhập ---------- */
+.btn-login {
+    width: 100%;
+    padding: 13px 20px;
+    background: var(--primary-blue);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-md);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 0.01em;
+    margin-top: var(--space-2);
+}
+
+.btn-login::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.08));
+}
+
+.btn-login:hover:not(:disabled) {
+    background: var(--primary-hover);
+    box-shadow: var(--shadow-blue);
+    transform: translateY(-2px);
+}
+
+.btn-login:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-login:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Hiệu ứng loading spinner */
+.spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+}
+
+.btn-login.loading .btn-text { display: none; }
+.btn-login.loading .spinner  { display: block; }
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ---------- Footer Form ---------- */
+.form-footer {
+    margin-top: var(--space-8);
+    text-align: center;
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--border-subtle);
+}
+
+.form-footer p {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+}
+
+.form-footer strong {
+    color: var(--text-secondary);
+}
+
+/* ---------- Demo Credentials (Dev mode) ---------- */
+.demo-credentials {
+    margin-top: var(--space-5);
+    padding: var(--space-4);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+}
+
+.demo-credentials h4 {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: var(--space-3);
+}
+
+.demo-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-subtle);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border-radius: var(--radius-sm);
+    padding: 6px 8px;
+    margin: 2px -8px;
+}
+
+.demo-item:last-child {
+    border-bottom: none;
+}
+
+.demo-item:hover {
+    background: var(--bg-hover);
+}
+
+.demo-item:hover .demo-hint {
+    opacity: 1;
+}
+
+.demo-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.demo-role {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--primary-blue);
+}
+
+.demo-email {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+}
+
+.demo-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+    .login-page {
+        grid-template-columns: 1fr;
+    }
+
+    .login-visual {
+        display: none;
+    }
+
+    .login-form-panel::before {
+        display: none;
+    }
+
+    .login-form-panel {
+        padding: var(--space-8) var(--space-6);
+        background: var(--bg-dark);
+    }
+}
+
+@media (max-width: 480px) {
+    .login-form-container {
+        max-width: 100%;
+    }
+}

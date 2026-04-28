@@ -1,0 +1,228 @@
+/* ============================================================
+   assets/css/pages/staff/dashboard.css
+   Styles riêng cho Staff Dashboard
+   ============================================================ */
+
+/* ---------- Welcome Row ---------- */
+.staff-welcome-row {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-4);
+    margin-bottom: var(--space-5);
+    align-items: stretch;
+}
+
+/* Greeting Card (trái) */
+.staff-greeting-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl);
+    padding: var(--space-6); 
+    display: flex;
+    flex-direction: column;  
+    align-items: center;     
+    justify-content: center;
+    gap: var(--space-4);
+    min-width: 280px;
+}
+
+.greeting-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, var(--primary-blue), #6366F1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #fff;
+    flex-shrink: 0;
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.35);
+}
+
+.greeting-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;    
+    text-align: center;
+    gap: 4px;
+}
+
+.greeting-time-label {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+}
+
+.greeting-name {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text-light);
+    letter-spacing: -0.02em;
+}
+
+.greeting-date {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+}
+
+/* Quick Action Card (phải) — override từ component */
+.quick-action-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: var(--space-6) var(--space-8); 
+}
+
+.qa-icon {
+    font-size: 1.25rem;
+    margin-bottom: var(--space-4);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: var(--radius-md);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(4px);;
+}
+
+/* ---------- Stats Row ---------- */
+.staff-stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+}
+
+/* ---------- Purchase Rate Card ---------- */
+.purchase-rate-card {
+    margin-bottom: var(--space-4);
+}
+
+.rate-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+}
+
+.rate-label {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--text-light);
+    margin-bottom: 2px;
+}
+
+.rate-desc {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+}
+
+.rate-value {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-light);
+    letter-spacing: -0.03em;
+    flex-shrink: 0;
+}
+
+.rate-legend {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    margin-top: var(--space-3);
+    flex-wrap: wrap;
+}
+
+.rate-leg {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ---------- Bảng lịch sử ---------- */
+.device-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.device-brand {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.device-model {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-light);
+}
+
+.customer-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+}
+
+.battery-display {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: 0.8125rem;
+}
+
+.battery-icon.good  { filter: hue-rotate(0deg); }
+.battery-icon.ok    { filter: hue-rotate(30deg) saturate(1.5); }
+.battery-icon.low   { filter: hue-rotate(180deg) saturate(2); }
+
+.price-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--success);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1100px) {
+    .staff-stats-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .staff-welcome-row {
+        grid-template-columns: 1fr;
+    }
+
+    .staff-greeting-card {
+        min-width: auto;
+    }
+}
+
+@media (max-width: 600px) {
+    .staff-stats-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    /* Ẩn cột phụ trên mobile */
+    .data-table th:nth-child(3),
+    .data-table td:nth-child(3),
+    .data-table th:nth-child(7),
+    .data-table td:nth-child(7) {
+        display: none;
+    }
+
+    .rate-legend {
+        gap: var(--space-3);
+    }
+}
