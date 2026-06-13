@@ -69,7 +69,14 @@ renderHeader('Định giá thiết bị');
                                min="1" max="100" value="80" required>
                     </div>
 
-                    <!-- Mức độ trầy xước -->
+                    <!-- Mức độ trầy xước —
+                         Giá trị được map thành rule_ids tương ứng trong JS
+                         và gửi lên API cùng với các rule do Staff tích chọn.
+                         0 = không trầy → không thêm rule
+                         1 = nhẹ         → rule "Vỏ máy trầy xước nặng" bị bỏ, chỉ dùng checklist
+                         Hiện tại field này được dùng làm UX hint; rule thực tế
+                         do checklist bên dưới quyết định.
+                    -->
                     <div class="mb-3">
                         <label class="form-label">Mức độ trầy xước / ngoại hình</label>
                         <select id="scratch-level" class="form-select">
@@ -78,6 +85,9 @@ renderHeader('Định giá thiết bị');
                             <option value="2">Trầy xước nặng / móp nhẹ</option>
                             <option value="3">Vỡ/nứt màn hình hoặc vỏ</option>
                         </select>
+                        <div class="form-text">
+                            Lựa chọn này hỗ trợ gợi ý; hãy tích đúng các quy tắc bên dưới để AI tính chính xác.
+                        </div>
                     </div>
 
                     <!-- Quy tắc khấu trừ AI (checklist động) -->
@@ -157,6 +167,4 @@ renderHeader('Định giá thiết bị');
 </div>
 
 <?php
-renderFooter();
-?>
-<script src="../assets/js/staff_app.js"></script>
+renderFooter(['../assets/js/staff_app.js']);

@@ -10,19 +10,19 @@
     /* ----------------------------------------------------------
      * DOM REFS — Trang Định giá (valuation.php)
      * ---------------------------------------------------------- */
-    const brandSelect   = document.getElementById('brand-select');
-    const modelSelect   = document.getElementById('model-select');
-    const infoRam       = document.getElementById('info-ram');
-    const infoRom       = document.getElementById('info-rom');
-    const infoBasePrice = document.getElementById('info-base-price');
+    const brandSelect    = document.getElementById('brand-select');
+    const modelSelect    = document.getElementById('model-select');
+    const infoRam        = document.getElementById('info-ram');
+    const infoRom        = document.getElementById('info-rom');
+    const infoBasePrice  = document.getElementById('info-base-price');
 
-    const batteryInput  = document.getElementById('battery-health');
-    const scratchSelect = document.getElementById('scratch-level');
-    const rulesChecklist= document.getElementById('rules-checklist');
+    const batteryInput   = document.getElementById('battery-health');
+    const scratchSelect  = document.getElementById('scratch-level');
+    const rulesChecklist = document.getElementById('rules-checklist');
 
-    const btnRunAi      = document.getElementById('btn-run-ai');
-    const btnConfirm    = document.getElementById('btn-confirm');
-    const btnDecline    = document.getElementById('btn-decline');
+    const btnRunAi   = document.getElementById('btn-run-ai');
+    const btnConfirm = document.getElementById('btn-confirm');
+    const btnDecline = document.getElementById('btn-decline');
 
     const placeholderEl = document.getElementById('result-placeholder');
     const resultBox     = document.getElementById('result-box');
@@ -149,13 +149,18 @@
             fd.append('model_id',       parseInt(modelId, 10));
             fd.append('battery_health', parseInt(batteryHealth, 10));
 
-            // rule_ids[] — multi-value
+            // scratch_level — giá trị từ dropdown ngoại hình
+            // Gửi lên để server có thể log hoặc dùng cho logic mở rộng sau này
+            const scratchVal = scratchSelect ? parseInt(scratchSelect.value, 10) : 0;
+            fd.append('scratch_level', scratchVal);
+
+            // rule_ids[] — multi-value từ checklist
             document.querySelectorAll('.rule-checkbox:checked').forEach(cb => {
                 fd.append('rule_ids[]', parseInt(cb.value, 10));
             });
 
-            btnRunAi.disabled      = true;
-            btnRunAi.textContent   = '⏳ AI đang phân tích...';
+            btnRunAi.disabled    = true;
+            btnRunAi.textContent = '⏳ AI đang phân tích...';
 
             const res = await Api.post('valuation_api.php', 'valuate', fd);
 
@@ -209,8 +214,8 @@
             fd.append('customer_name',  name);
             fd.append('customer_phone', phone);
 
-            btnConfirm.disabled      = true;
-            btnConfirm.textContent   = '⏳ Đang xử lý...';
+            btnConfirm.disabled    = true;
+            btnConfirm.textContent = '⏳ Đang xử lý...';
 
             const res = await Api.post('valuation_api.php', 'confirm_purchase', fd);
 

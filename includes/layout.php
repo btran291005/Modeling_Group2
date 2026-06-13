@@ -12,8 +12,8 @@ declare(strict_types=1);
  */
 function renderHeader(string $title): void
 {
-    $role     = $_SESSION['user']['role']      ?? '';
-    $fullName = $_SESSION['full_name'] ?? '';
+    $role      = $_SESSION['user']['role']      ?? '';
+    $fullName  = $_SESSION['user']['full_name'] ?? '';
     $roleLower = strtolower($role);
     ?>
 <!DOCTYPE html>
@@ -88,9 +88,12 @@ function renderHeader(string $title): void
 }
 
 /**
- * Đóng các thẻ HTML mở trong renderHeader() + nạp JS chung
+ * Đóng các thẻ HTML mở trong renderHeader() + nạp JS chung.
+ *
+ * @param array $extraScripts  Danh sách đường dẫn JS bổ sung, nạp SAU api.js
+ *                             Ví dụ: ['../assets/js/staff_app.js']
  */
-function renderFooter(): void
+function renderFooter(array $extraScripts = []): void
 {
     ?>
         </main><!-- end main content -->
@@ -98,6 +101,9 @@ function renderFooter(): void
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../assets/js/api.js"></script>
+    <?php foreach ($extraScripts as $src): ?>
+    <script src="<?= htmlspecialchars($src, ENT_QUOTES, 'UTF-8') ?>"></script>
+    <?php endforeach; ?>
 </body>
 </html>
     <?php

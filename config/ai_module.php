@@ -3,12 +3,30 @@
  * config/ai_module.php
  * Module tích hợp Gemini 2.0 Flash để định giá thiết bị
  *
+ * API Key được đọc từ biến môi trường GEMINI_API_KEY.
+ * Tạo file .env hoặc set biến môi trường trên server:
+ *   export GEMINI_API_KEY="AIzaSy..."
+ * hoặc trong Apache VirtualHost:
+ *   SetEnv GEMINI_API_KEY "AIzaSy..."
+ * hoặc trong .htaccess:
+ *   SetEnv GEMINI_API_KEY "AIzaSy..."
+ *
  * Xử lý 429 (rate limit): retry tối đa 2 lần với exponential backoff,
  * sau đó fallback sang công thức tính giá nội bộ.
  */
 
-define('GEMINI_API_KEY', 'AIzaSyCJjGVqvylGsH8grCehVx-lgY-wd3rg70E');
-define('GEMINI_MAX_RETRIES', 2);
+// ── API Key đọc từ môi trường, KHÔNG hardcode trong source ──────
+$_geminiApiKey = $_ENV['GEMINI_API_KEY'] ?? getenv('GEMINI_API_KEY') ?? '';
+
+if (!defined('GEMINI_API_KEY')) {
+    define('GEMINI_API_KEY', $_geminiApiKey);
+}
+
+if (!defined('GEMINI_MAX_RETRIES')) {
+    define('GEMINI_MAX_RETRIES', 2);
+}
+
+unset($_geminiApiKey);
 
 function getAISuggestedPrice(array $deviceInfo, array $activeRules): array
 {
@@ -71,13 +89,20 @@ TRẢ LỜI (JSON duy nhất, KHÔNG có markdown, KHÔNG có text thừa):
 PROMPT;
 
     $payload = json_encode([
-        'contents'          => [['parts' => [['text' => $prompt]]]],
-        'generationConfig'  => [
+        'contents'         => [['parts' => [['text' => $prompt]]]],
+        'generationConfig' => [
             'temperature'      => 0.2,
             'maxOutputTokens'  => 300,
             'responseMimeType' => 'application/json',
         ],
     ]);
+
+    // Kiểm tra API key có giá trị không
+    if (GEMINI_API_KEY === '') {
+        error_log('[AI MODULE] GEMINI_API_KEY chưa được cấu hình trong biến môi trường.');
+        return _fallbackPrice($deviceInfo, $totalDeduction,
+            'API key chưa được cấu hình. Đã dùng công thức dự phòng.');
+    }
 
     $url      = GEMINI_API_URL . '?key=' . GEMINI_API_KEY;
     $response = null;

@@ -34,7 +34,7 @@ renderHeader('Lịch sử Định giá cá nhân');
     <div class="card-header">Nhật ký định giá của tôi</div>
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0" id="history-table">
+            <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
                         <th>Ngày giờ</th>
@@ -60,6 +60,4 @@ renderHeader('Lịch sử Định giá cá nhân');
 </div>
 
 <?php
-renderFooter();
-?>
-<script src="../assets/js/staff_app.js"></script>
+renderFooter(['../assets/js/staff_app.js']);
