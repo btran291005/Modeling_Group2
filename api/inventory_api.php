@@ -64,6 +64,87 @@ switch ($action) {
 
 
     // ══════════════════════════════════════════════════════════
+    // case 'admin_list'
+    // GET /api/inventory_api.php?action=admin_list
+    // Quyền  : Admin only
+    // Trả về : [{imei, status, received_at, session_id, battery_health,
+    //            final_price, model_id, model_name, ram_gb, rom_gb,
+    //            brand_id, brand_name, staff_id, staff_name,
+    //            customer_id, customer_name, phone_number}, ...]
+    // ══════════════════════════════════════════════════════════
+    case 'admin_list':
+        apiRequireAdmin();
+
+        $items = $svc->getAdminInventory();
+        json_ok($items);
+
+
+    // ══════════════════════════════════════════════════════════
+    // case 'delete'
+    // POST /api/inventory_api.php?action=delete
+    // Body   : { "imei": "<string>" }
+    // Quyền  : Admin only
+    // Trả về : { imei }
+    // ══════════════════════════════════════════════════════════
+    case 'delete':
+        require_method('POST');
+        apiRequireAdmin();
+
+        $body = json_decode(file_get_contents('php://input'), true) ?? [];
+        $imei = trim((string) ($body['imei'] ?? $body['id'] ?? ''));
+
+        if ($imei === '') {
+            json_err('Thiếu IMEI thiết bị cần xóa.');
+        }
+
+        try {
+            $svc->deleteItem($imei);
+            json_ok(['imei' => $imei], 'Đã xóa thiết bị khỏi kho thành công.');
+        } catch (InvalidArgumentException $e) {
+            json_err($e->getMessage(), 400);
+        } catch (RuntimeException $e) {
+            json_err($e->getMessage(), 404);
+        }
+
+
+    // ══════════════════════════════════════════════════════════
+    // case 'update_detail'
+    // POST /api/inventory_api.php?action=update_detail
+    // Body   : { "imei": "<string hiện tại>",
+    //            "new_imei": "<string mới, optional>",
+    //            "status": "Stored|Refurbishing|Sold, optional",
+    //            "final_price": <number, optional> }
+    // Quyền  : Admin only
+    // Trả về : { imei }
+    // ══════════════════════════════════════════════════════════
+    case 'update_detail':
+        require_method('POST');
+        apiRequireAdmin();
+
+        $body = json_decode(file_get_contents('php://input'), true) ?? [];
+        $imei = trim((string) ($body['imei'] ?? ''));
+
+        if ($imei === '') {
+            json_err('Thiếu IMEI thiết bị cần sửa.');
+        }
+
+        $data = [
+            'imei'        => isset($body['new_imei'])    ? $body['new_imei']    : null,
+            'status'      => isset($body['status'])      ? $body['status']      : null,
+            'final_price' => isset($body['final_price']) ? $body['final_price'] : null,
+        ];
+
+        try {
+            $svc->updateItemDetail($imei, $data);
+            json_ok(['imei' => $data['imei'] ?? $imei], 'Đã cập nhật thông tin thiết bị thành công.');
+        } catch (InvalidArgumentException $e) {
+            json_err($e->getMessage(), 400);
+        } catch (RuntimeException $e) {
+            json_err($e->getMessage(), 409);
+        }
+
+
+    // ══════════════════════════════════════════════════════════
     // default — action không tồn tại
     // ══════════════════════════════════════════════════════════
     default:

@@ -683,4 +683,64 @@ class ValuationService
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+
+    // ═══════════════════════════════════════════════════════════
+    // NHÓM 7: NHẬT KÝ ĐỊNH GIÁ TOÀN HỆ THỐNG (Admin) — getGlobalValuationLogs()
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * Lấy toàn bộ lịch sử định giá của TẤT CẢ nhân viên (KHÔNG phân trang).
+     * Dùng cho Admin theo dõi hiệu suất Staff và độ chính xác của AI
+     * (so sánh ai_suggested_price với final_price khi đã Purchased).
+     *
+     * Sắp xếp theo created_at giảm dần (mới nhất lên đầu).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getGlobalValuationLogs(): array
+    {
+        $sql = "
+            SELECT
+                vs.session_id,
+                vs.created_at,
+                vs.battery_health,
+                vs.ai_suggested_price,
+                vs.final_status,
+                dm.model_id,
+                dm.model_name,
+                dm.ram_gb,
+                dm.rom_gb,
+                dm.base_price,
+                b.brand_id,
+                b.brand_name,
+                u.user_id    AS staff_id,
+                u.full_name  AS staff_name,
+                c.full_name  AS customer_name,
+                c.phone_number,
+                g.imei,
+                g.status     AS gadget_status,
+                CASE
+                    WHEN vs.final_status = 'Purchased' THEN vs.ai_suggested_price
+                    ELSE NULL
+                END AS final_price,
+                (
+                    SELECT GROUP_CONCAT(apr.condition_name SEPARATOR ', ')
+                    FROM session_rule_details srd
+                    JOIN ai_pricing_rules apr ON srd.rule_id = apr.rule_id
+                    WHERE srd.session_id = vs.session_id
+                ) AS applied_rules
+            FROM valuation_sessions vs
+            JOIN device_models dm ON vs.model_id    = dm.model_id
+            JOIN brands        b  ON dm.brand_id    = b.brand_id
+            JOIN users         u  ON vs.user_id     = u.user_id
+            LEFT JOIN customers c ON vs.customer_id  = c.customer_id
+            LEFT JOIN gadgets   g ON g.session_id    = vs.session_id
+            ORDER BY vs.created_at DESC
+        ";
+
+        return $this->pdo
+            ->query($sql)
+            ->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

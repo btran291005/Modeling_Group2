@@ -527,11 +527,99 @@
     }
 
 
+    /* ============================================================
+     * DASHBOARD (staff/dashboard.php)
+     * ============================================================ */
+
+    const cardToday     = document.getElementById('card-today');
+    const cardWeek      = document.getElementById('card-week');
+    const cardPurchased = document.getElementById('card-purchased');
+    const cardCapital   = document.getElementById('card-capital');
+    const dashTbody     = document.getElementById('staff-recent-tbody');
+    const dashCount     = document.getElementById('staff-recent-count');
+
+    const DASH_STATUS_BADGES = {
+        'Pending':   '<span class="badge bg-warning text-dark">⏳ Đang chờ</span>',
+        'Purchased': '<span class="badge bg-success">✅ Đã thu mua</span>',
+        'Declined':  '<span class="badge bg-danger">❌ Từ chối</span>',
+    };
+
+    /**
+     * Tải toàn bộ dashboard Staff từ staff_dashboard_api.php
+     */
+    async function loadStaffDashboard() {
+        if (!dashTbody && !cardToday) return;
+
+        const res = await Api.get('staff_dashboard_api.php', 'get_metrics');
+
+        if (!res.ok) {
+            if (dashTbody) {
+                dashTbody.innerHTML = `
+                    <tr><td colspan="7" class="text-center text-danger py-4">
+                        ${Api.esc(res.msg || 'Không thể tải dữ liệu dashboard.')}
+                    </td></tr>`;
+            }
+            return;
+        }
+
+        renderDashCards(res.data.cards);
+        renderDashRecent(res.data.recent);
+    }
+
+    function renderDashCards(cards) {
+        if (!cards) return;
+        if (cardToday)     cardToday.textContent     = cards.today_sessions  ?? '—';
+        if (cardWeek)      cardWeek.textContent      = cards.week_sessions   ?? '—';
+        if (cardPurchased) cardPurchased.textContent = cards.total_purchased ?? '—';
+        if (cardCapital)   cardCapital.textContent   = Api.vnd(cards.total_capital ?? 0);
+    }
+
+    function renderDashRecent(data) {
+        if (!dashTbody) return;
+
+        if (!Array.isArray(data) || data.length === 0) {
+            dashTbody.innerHTML = `
+                <tr><td colspan="7" class="text-center text-muted py-4">
+                    Chưa có hoạt động nào. Hãy bắt đầu định giá thiết bị!
+                </td></tr>`;
+            if (dashCount) dashCount.textContent = '0 phiên';
+            return;
+        }
+
+        if (dashCount) dashCount.textContent = `${data.length} phiên`;
+
+        dashTbody.innerHTML = data.map(item => {
+            const deviceName = `${Api.esc(item.brand_name || '')} ${Api.esc(item.model_name || '')}`.trim();
+            const aiPrice    = item.ai_suggested_price != null ? Api.vnd(item.ai_suggested_price) : '—';
+            const finalPrice = (item.final_status === 'Purchased' && item.final_price != null)
+                ? `<span class="fw-semibold text-success">${Api.vnd(item.final_price)}</span>`
+                : '<span class="text-muted">—</span>';
+            const badge  = DASH_STATUS_BADGES[item.final_status] || Api.esc(item.final_status || '—');
+            const imei   = item.imei
+                ? `<span class="font-monospace">${Api.esc(item.imei)}</span>`
+                : '<span class="text-muted fst-italic">Chưa nhập</span>';
+
+            return `
+                <tr>
+                    <td class="text-muted small">${item.session_id}</td>
+                    <td class="small">${Api.esc(item.created_at || '—')}</td>
+                    <td class="fw-semibold small">${deviceName || '—'}</td>
+                    <td class="small">${imei}</td>
+                    <td class="small text-primary">${aiPrice}</td>
+                    <td class="small">${finalPrice}</td>
+                    <td>${badge}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+
     /* ----------------------------------------------------------
      * START
      * ---------------------------------------------------------- */
     initValuation();
     loadInventory();
     loadHistory();
+    loadStaffDashboard();
 
 }());
