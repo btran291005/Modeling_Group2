@@ -10,7 +10,8 @@ require_once __DIR__ . '/../config/constants.php';
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/layout.php';
 
-requireRole('staff');
+// ✅ Chữ hoa 'Staff' — khớp với giá trị lưu trong DB và session
+requireRole('Staff');
 
 renderHeader('Định giá thiết bị');
 ?>
@@ -158,7 +159,5 @@ renderHeader('Định giá thiết bị');
 
 <?php
 renderFooter();
-// renderFooter() đã nạp ../assets/js/api.js
-// Nạp thêm staff_app.js cho trang này
 ?>
 <script src="../assets/js/staff_app.js"></script>

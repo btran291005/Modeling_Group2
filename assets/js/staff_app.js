@@ -145,20 +145,21 @@
                 return;
             }
 
-            const ruleIds = Array.from(document.querySelectorAll('.rule-checkbox:checked'))
-                .map(cb => parseInt(cb.value, 10));
+            // ✅ Dùng FormData để $_POST đọc được
+            const fd = new FormData();
+            fd.append('model_id',       parseInt(modelId, 10));
+            fd.append('battery_health', parseInt(batteryHealth, 10));
+            fd.append('scratch_level',  parseInt(scratchLevel, 10));
 
-            const payload = {
-                model_id:       parseInt(modelId, 10),
-                battery_health: parseInt(batteryHealth, 10),
-                scratch_level:  parseInt(scratchLevel, 10),
-                rule_ids:       ruleIds,
-            };
+            // rule_ids[] — multi-value
+            Array.from(document.querySelectorAll('.rule-checkbox:checked'))
+                .forEach(cb => fd.append('rule_ids[]', parseInt(cb.value, 10)));
 
             btnRunAi.disabled = true;
             btnRunAi.textContent = '⏳ AI đang phân tích...';
 
-            const res = await Api.post('valuation_api.php', 'run_ai', payload);
+            // ✅ Action đúng: 'valuate'
+            const res = await Api.post('valuation_api.php', 'valuate', fd);
 
             btnRunAi.disabled = false;
             btnRunAi.textContent = '🤖 Chạy AI Định Giá';
@@ -204,17 +205,18 @@
                 return;
             }
 
-            const payload = {
-                session_id:     currentSessionId,
-                imei:           imei,
-                customer_name:  name,
-                customer_phone: phone,
-            };
+            // ✅ Dùng FormData để $_POST đọc được
+            const fd = new FormData();
+            fd.append('session_id',     currentSessionId);
+            fd.append('imei',           imei);
+            fd.append('customer_name',  name);
+            fd.append('customer_phone', phone);
 
             btnConfirm.disabled = true;
             btnConfirm.textContent = '⏳ Đang xử lý...';
 
-            const res = await Api.post('valuation_api.php', 'confirm', payload);
+            // ✅ Action đúng: 'confirm_purchase'
+            const res = await Api.post('valuation_api.php', 'confirm_purchase', fd);
 
             btnConfirm.disabled = false;
             btnConfirm.textContent = '✅ Chốt thu mua & Nhập kho';
@@ -239,7 +241,10 @@
             if (!currentSessionId) return;
             if (!confirm('Xác nhận khách từ chối bán với mức giá này?')) return;
 
-            const res = await Api.post('valuation_api.php', 'decline', { session_id: currentSessionId });
+            const fd = new FormData();
+            fd.append('session_id', currentSessionId);
+
+            const res = await Api.post('valuation_api.php', 'decline', fd);
 
             if (!res.ok) {
                 alert('Lỗi: ' + (res.msg || 'Không thể cập nhật.'));
@@ -265,30 +270,39 @@
     }
 
     function resetForm() {
+        // ✅ Guard — chỉ chạy khi đang ở trang valuation
+        if (!btnConfirm) return;
+
         currentSessionId = null;
         currentPrice     = null;
 
-        document.getElementById('valuation-form').reset();
+        const form = document.getElementById('valuation-form');
+        if (form) form.reset();
+
         resetDeviceInfo();
 
-        modelSelect.innerHTML = '<option value="">-- Chọn hãng trước --</option>';
-        modelSelect.disabled  = true;
+        if (modelSelect) {
+            modelSelect.innerHTML = '<option value="">-- Chọn hãng trước --</option>';
+            modelSelect.disabled  = true;
+        }
 
         document.querySelectorAll('.rule-checkbox').forEach(cb => cb.checked = false);
 
-        btnRunAi.disabled = true;
-        btnConfirm.disabled = true;
-        btnDecline.disabled = true;
+        if (btnRunAi)  btnRunAi.disabled  = true;
+        if (btnConfirm) btnConfirm.disabled = true;
+        if (btnDecline) btnDecline.disabled = true;
 
-        customerPhone.value = '';
-        customerName.value  = '';
-        deviceImei.value    = '';
+        if (customerPhone) customerPhone.value = '';
+        if (customerName)  customerName.value  = '';
+        if (deviceImei)    deviceImei.value    = '';
 
         setTimeout(() => {
-            resultBox.classList.add('d-none');
-            placeholderEl.classList.remove('d-none');
-            resultDone.classList.add('d-none');
-            resultDone.classList.replace('alert-secondary', 'alert-success');
+            if (resultBox)     resultBox.classList.add('d-none');
+            if (placeholderEl) placeholderEl.classList.remove('d-none');
+            if (resultDone) {
+                resultDone.classList.add('d-none');
+                resultDone.classList.replace('alert-secondary', 'alert-success');
+            }
         }, 2500);
     }
 
@@ -310,13 +324,13 @@
     /**
      * Render select trạng thái cho 1 dòng
      */
-    function buildStatusSelect(id, currentStatus) {
+    function buildStatusSelect(imei, currentStatus) {
         const options = Object.entries(STATUS_LABELS).map(([value, label]) => {
             const selected = value === currentStatus ? 'selected' : '';
             return `<option value="${value}" ${selected}>${label}</option>`;
         }).join('');
 
-        return `<select class="form-select form-select-sm status-select" data-id="${id}">${options}</select>`;
+        return `<select class="form-select form-select-sm status-select" data-imei="${Api.esc(imei)}">${options}</select>`;
     }
 
     /**
@@ -329,7 +343,8 @@
             <tr><td colspan="8" class="text-center text-muted py-4">Đang tải dữ liệu...</td></tr>
         `;
 
-        const res = await Api.get('../api/inventory_api.php', 'list');
+        // ✅ Đường dẫn đúng: chỉ tên file, không có ../api/
+        const res = await Api.get('inventory_api.php', 'list');
 
         if (!res.ok || !Array.isArray(res.data)) {
             invTableBody.innerHTML = `
@@ -355,17 +370,18 @@
                 ? `${Api.esc(item.customer_name)}<br><small class="text-muted">${Api.esc(item.phone_number || '')}</small>`
                 : '<span class="text-muted">—</span>';
             const receivedAt  = item.received_at || '—';
+            const imei        = item.imei || '';
 
             return `
-                <tr data-search="${Api.esc((item.imei || '') + ' ' + deviceName).toLowerCase()}">
-                    <td class="text-monospace">${Api.esc(item.imei || '—')}</td>
+                <tr data-search="${Api.esc((imei + ' ' + deviceName).toLowerCase())}">
+                    <td class="text-monospace">${Api.esc(imei || '—')}</td>
                     <td>${deviceName || '—'}</td>
                     <td>${config}</td>
                     <td>${battery}</td>
                     <td>${price}</td>
                     <td>${customer}</td>
                     <td>${Api.esc(receivedAt)}</td>
-                    <td>${buildStatusSelect(item.id, item.status)}</td>
+                    <td>${buildStatusSelect(imei, item.status)}</td>
                 </tr>
             `;
         }).join('');
@@ -383,25 +399,32 @@
     function bindStatusSelectEvents() {
         document.querySelectorAll('.status-select').forEach(sel => {
             sel.addEventListener('change', async function () {
-                const id     = this.dataset.id;
+                const imei   = this.dataset.imei;
                 const status = this.value;
+                const prev   = this.dataset.prev || '';
 
                 this.disabled = true;
 
-                const res = await Api.postJson('../api/inventory_api.php', 'update_status', {
-                    id:     parseInt(id, 10),
+                // ✅ Đường dẫn đúng: chỉ tên file, không có ../api/
+                const res = await Api.postJson('inventory_api.php', 'update_status', {
+                    imei:   imei,
                     status: status,
                 });
 
                 this.disabled = false;
 
                 if (res.ok) {
+                    this.dataset.prev = status;
                     alert('Cập nhật thành công!');
-                    loadInventory();
                 } else {
+                    // Rollback
+                    this.value = prev;
                     alert('Lỗi: ' + (res.msg || 'Không thể cập nhật trạng thái.'));
                 }
             });
+
+            // Lưu giá trị ban đầu
+            sel.dataset.prev = sel.value;
         });
     }
 
@@ -446,7 +469,7 @@
             <tr><td colspan="8" class="text-center text-muted py-4">Đang tải dữ liệu...</td></tr>
         `;
 
-        const res = await Api.get('../api/valuation_api.php', 'history');
+        const res = await Api.get('valuation_api.php', 'history');
 
         if (!res.ok || !Array.isArray(res.data)) {
             historyTableBody.innerHTML = `

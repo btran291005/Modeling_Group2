@@ -68,7 +68,7 @@ switch ($action) {
     // Trả về : [{rule_id, condition_name, deduction_percent}, ...]
     // ══════════════════════════════════════════════════════════
     case 'rules':
-        require_role('Staff');
+        require_auth();
 
         $rules = $svc->getActiveRules();
         json_ok($rules);
@@ -85,12 +85,14 @@ switch ($action) {
     // ══════════════════════════════════════════════════════════
     case 'valuate':
         require_method('POST');
-        require_role('Staff');
+        require_auth();
 
         // ── Parse & Validate input ────────────────────────────
         $modelId       = post_int('model_id');
         $batteryHealth = post_int('battery_health', 100);
-        $ruleIds       = post_int_array('rule_ids');   // [] nếu không gửi
+
+        // ✅ JS gửi FormData với key rule_ids[] → PHP nhận $_POST['rule_ids']
+        $ruleIds = array_map('intval', $_POST['rule_ids'] ?? []);
 
         if ($modelId <= 0) {
             json_err('Thiếu model_id hoặc model_id không hợp lệ.');
@@ -99,10 +101,17 @@ switch ($action) {
             json_err('battery_health phải nằm trong khoảng 1–100.');
         }
 
+        // ── Lấy staffId từ session đúng chuẩn ────────────────
+        // ✅ Session được lưu dưới key 'user' → 'user_id'
+        $staffId = (int) ($_SESSION['user']['user_id'] ?? 0);
+        if ($staffId <= 0) {
+            json_err('Không xác định được tài khoản đang đăng nhập.', 401);
+        }
+
         // ── Gọi Service ───────────────────────────────────────
         try {
             $result = $svc->valuate(
-                (int) $_SESSION['user_id'],
+                $staffId,
                 $modelId,
                 $batteryHealth,
                 $ruleIds
@@ -124,7 +133,7 @@ switch ($action) {
     // ══════════════════════════════════════════════════════════
     case 'confirm_purchase':
         require_method('POST');
-        require_role('Staff');
+        require_auth();
 
         // ── Parse ─────────────────────────────────────────────
         $sessionId     = post_int('session_id');
@@ -146,10 +155,16 @@ switch ($action) {
             json_err('Số điện thoại không hợp lệ (định dạng Việt Nam: 03x/05x/07x/08x/09x).');
         }
 
+        // ✅ Session đúng chuẩn
+        $staffId = (int) ($_SESSION['user']['user_id'] ?? 0);
+        if ($staffId <= 0) {
+            json_err('Không xác định được tài khoản đang đăng nhập.', 401);
+        }
+
         // ── Gọi Service ───────────────────────────────────────
         try {
             $result = $svc->confirmPurchase(
-                (int) $_SESSION['user_id'],
+                $staffId,
                 $sessionId,
                 $imei,
                 $customerName,
@@ -159,7 +174,6 @@ switch ($action) {
         } catch (InvalidArgumentException $e) {
             json_err($e->getMessage(), 400);
         } catch (RuntimeException $e) {
-            // Phân biệt lỗi nghiệp vụ (IMEI trùng, session sai...) vs lỗi DB
             $code = str_contains($e->getMessage(), 'Lỗi') ? 500 : 409;
             json_err($e->getMessage(), $code);
         }
@@ -174,16 +188,22 @@ switch ($action) {
     // ══════════════════════════════════════════════════════════
     case 'decline':
         require_method('POST');
-        require_role('Staff');
+        require_auth();
 
         $sessionId = post_int('session_id');
         if ($sessionId <= 0) {
             json_err('Thiếu hoặc sai session_id.');
         }
 
+        // ✅ Session đúng chuẩn
+        $staffId = (int) ($_SESSION['user']['user_id'] ?? 0);
+        if ($staffId <= 0) {
+            json_err('Không xác định được tài khoản đang đăng nhập.', 401);
+        }
+
         try {
             $result = $svc->declineSession(
-                (int) $_SESSION['user_id'],
+                $staffId,
                 $sessionId
             );
             json_ok($result, 'Đã ghi nhận từ chối.');
@@ -204,9 +224,10 @@ switch ($action) {
     //            applied_rules}, ...]
     // ══════════════════════════════════════════════════════════
     case 'history':
-        require_role('Staff');
+        require_auth();
 
-        $staffId = (int) ($_SESSION['user']['id'] ?? $_SESSION['user_id'] ?? 0);
+        // ✅ Session đúng chuẩn — key là 'user_id' không phải 'id'
+        $staffId = (int) ($_SESSION['user']['user_id'] ?? 0);
 
         if ($staffId <= 0) {
             json_err('Không xác định được tài khoản đang đăng nhập.', 401);

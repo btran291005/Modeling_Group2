@@ -10,9 +10,10 @@ require_once __DIR__ . '/../config/constants.php';
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/layout.php';
 
-requireRole('staff');
+// ✅ Chữ hoa 'Staff' — khớp với giá trị lưu trong DB và session
+requireRole('Staff');
 
-$fullName = $_SESSION['full_name'] ?? 'Staff';
+$fullName = $_SESSION['user']['full_name'] ?? 'Staff';
 
 renderHeader('Staff Dashboard');
 ?>

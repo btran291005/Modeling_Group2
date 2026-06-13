@@ -10,7 +10,8 @@ require_once __DIR__ . '/../config/constants.php';
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/layout.php';
 
-requireRole('staff');
+// ✅ Chữ hoa 'Staff' — khớp với giá trị lưu trong DB và session
+requireRole('Staff');
 
 renderHeader('Lịch sử Định giá cá nhân');
 ?>
@@ -60,7 +61,5 @@ renderHeader('Lịch sử Định giá cá nhân');
 
 <?php
 renderFooter();
-// renderFooter() đã nạp ../assets/js/api.js
-// staff_app.js cũng được nạp ở footer
 ?>
 <script src="../assets/js/staff_app.js"></script>
