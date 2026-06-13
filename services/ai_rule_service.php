@@ -1,6 +1,6 @@
 <?php
 // ============================================================
-// FILE: services/AiRuleService.php
+// FILE: services/ai_rule_service.php  (class: AiRuleService)
 // ============================================================
 
 declare(strict_types=1);
@@ -19,20 +19,20 @@ class AiRuleService
     // ----------------------------------------------------------
     public function getAllRules(): array
     {
-        $sql = "
+        $stmt = $this->pdo->query("
             SELECT
-                r.id,
-                r.rule_name,
-                r.deduction_pct,
+                r.rule_id            AS id,
+                r.condition_name     AS rule_name,
+                r.deduction_percent  AS deduction_pct,
                 r.is_active,
                 r.created_at,
-                COUNT(srd.id) AS usage_count
-            FROM ai_rules r
-            LEFT JOIN session_rule_details srd ON srd.rule_id = r.id
-            GROUP BY r.id
-            ORDER BY r.id ASC
-        ";
-        $stmt = $this->pdo->query($sql);
+                COUNT(srd.rule_id)   AS usage_count
+            FROM ai_pricing_rules r
+            LEFT JOIN session_rule_details srd ON srd.rule_id = r.rule_id
+            GROUP BY r.rule_id, r.condition_name, r.deduction_percent, r.is_active, r.created_at
+            ORDER BY r.rule_id ASC
+        ");
+
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -41,8 +41,11 @@ class AiRuleService
     // ----------------------------------------------------------
     public function createRule(string $name, float $pct, int $isActive): bool
     {
-        $sql  = "INSERT INTO ai_rules (rule_name, deduction_pct, is_active) VALUES (:name, :pct, :is_active)";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pdo->prepare("
+            INSERT INTO ai_pricing_rules (condition_name, deduction_percent, is_active)
+            VALUES (:name, :pct, :is_active)
+        ");
+
         return $stmt->execute([
             ':name'      => trim($name),
             ':pct'       => $pct,
@@ -55,12 +58,14 @@ class AiRuleService
     // ----------------------------------------------------------
     public function updateRule(int $id, string $name, float $pct, int $isActive): bool
     {
-        $sql  = "
-            UPDATE ai_rules
-            SET rule_name = :name, deduction_pct = :pct, is_active = :is_active
-            WHERE id = :id
-        ";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pdo->prepare("
+            UPDATE ai_pricing_rules
+            SET condition_name    = :name,
+                deduction_percent = :pct,
+                is_active         = :is_active
+            WHERE rule_id = :id
+        ");
+
         return $stmt->execute([
             ':name'      => trim($name),
             ':pct'       => $pct,
@@ -74,8 +79,12 @@ class AiRuleService
     // ----------------------------------------------------------
     public function toggleRule(int $id): bool
     {
-        $sql  = "UPDATE ai_rules SET is_active = 1 - is_active WHERE id = :id";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pdo->prepare("
+            UPDATE ai_pricing_rules
+            SET is_active = 1 - is_active
+            WHERE rule_id = :id
+        ");
+
         return $stmt->execute([':id' => $id]);
     }
 
@@ -84,7 +93,6 @@ class AiRuleService
     // ----------------------------------------------------------
     public function deleteRule(int $id): bool
     {
-        // Kiểm tra usage_count
         $check = $this->pdo->prepare(
             "SELECT COUNT(*) FROM session_rule_details WHERE rule_id = :id"
         );
@@ -97,7 +105,10 @@ class AiRuleService
             );
         }
 
-        $stmt = $this->pdo->prepare("DELETE FROM ai_rules WHERE id = :id");
+        $stmt = $this->pdo->prepare(
+            "DELETE FROM ai_pricing_rules WHERE rule_id = :id"
+        );
+
         return $stmt->execute([':id' => $id]);
     }
 }

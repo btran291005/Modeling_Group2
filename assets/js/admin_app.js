@@ -431,7 +431,7 @@
 
         if (!elStaff && !elBrands && !elRecent) return;
 
-        const res = await Api.get('../api/dashboard_api.php', 'get_metrics');
+        const res = await Api.get('../api/admin_dashboard_api.php', 'get_metrics');
 
         if (!res.ok) {
             if (elError) elError.classList.remove('d-none');

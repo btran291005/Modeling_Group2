@@ -1,12 +1,14 @@
 <?php
 // ============================================================
-// FILE: api/dashboard_api.php
+// FILE: api/admin_dashboard_api.php
 // ============================================================
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/_helpers.php';
-require_once __DIR__ . '/../services/DashboardService.php';
+require_once __DIR__ . '/helpers.php';
+require_once __DIR__ . '/../config/db_connect.php';
+require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../services/admin_dashboard_service.php';
 
 apiRequireAdmin();
 
@@ -15,7 +17,7 @@ $action = $_GET['action'] ?? '';
 switch ($action) {
 
     // ----------------------------------------------------------
-    // GET /api/dashboard_api.php?action=get_metrics
+    // GET /api/admin_dashboard_api.php?action=get_metrics
     // Trả về cards + brands + recent activities trong 1 JSON
     // ----------------------------------------------------------
     case 'get_metrics':
@@ -36,9 +38,6 @@ switch ($action) {
         }
         break;
 
-    // ----------------------------------------------------------
-    // Action không tồn tại
-    // ----------------------------------------------------------
     default:
         json_fail('Action không hợp lệ.', 404);
         break;

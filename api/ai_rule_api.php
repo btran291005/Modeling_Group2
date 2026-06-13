@@ -5,13 +5,11 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/../config/db_connect.php';
 require_once __DIR__ . '/../config/constants.php';
 require_once __DIR__ . '/../includes/auth.php';
-require_once __DIR__ . '/../includes/functions.php';
-require_once __DIR__ . '/../services/AiRuleService.php';
-
-header('Content-Type: application/json; charset=utf-8');
+require_once __DIR__ . '/../services/ai_rule_service.php';
 
 apiRequireAdmin();
 
@@ -30,76 +28,76 @@ switch ($action) {
     // ── LIST ──────────────────────────────────────────────────
     case 'list':
         $rules = $service->getAllRules();
-        echo json_ok($rules);
+        json_ok($rules);
         break;
 
     // ── CREATE ────────────────────────────────────────────────
     case 'create':
-        $name     = trim($body['name']      ?? '');
-        $pct      = (float) ($body['pct']   ?? 0);
+        $name     = trim($body['name']    ?? '');
+        $pct      = (float) ($body['pct'] ?? 0);
         $isActive = isset($body['is_active']) ? (int)(bool)$body['is_active'] : 1;
 
         if ($name === '') {
-            echo json_err('Tên quy tắc không được để trống.');
+            json_fail('Tên quy tắc không được để trống.');
             break;
         }
         if ($pct < 0 || $pct > 100) {
-            echo json_err('Phần trăm khấu trừ phải từ 0 đến 100.');
+            json_fail('Phần trăm khấu trừ phải từ 0 đến 100.');
             break;
         }
 
         $ok = $service->createRule($name, $pct, $isActive);
-        echo $ok
+        $ok
             ? json_ok(null, 'Thêm quy tắc thành công.')
-            : json_err('Thêm quy tắc thất bại.');
+            : json_fail('Thêm quy tắc thất bại.');
         break;
 
     // ── UPDATE ────────────────────────────────────────────────
     case 'update':
-        $id       = (int)  ($body['id']     ?? 0);
-        $name     = trim($body['name']      ?? '');
-        $pct      = (float) ($body['pct']   ?? 0);
+        $id       = (int)   ($body['id']  ?? 0);
+        $name     = trim($body['name']    ?? '');
+        $pct      = (float) ($body['pct'] ?? 0);
         $isActive = isset($body['is_active']) ? (int)(bool)$body['is_active'] : 1;
 
-        if ($id <= 0) { echo json_err('ID không hợp lệ.'); break; }
-        if ($name === '') { echo json_err('Tên quy tắc không được để trống.'); break; }
-        if ($pct < 0 || $pct > 100) { echo json_err('Phần trăm khấu trừ phải từ 0 đến 100.'); break; }
+        if ($id <= 0)         { json_fail('ID không hợp lệ.');                              break; }
+        if ($name === '')     { json_fail('Tên quy tắc không được để trống.');              break; }
+        if ($pct < 0 || $pct > 100) { json_fail('Phần trăm khấu trừ phải từ 0 đến 100.'); break; }
 
         $ok = $service->updateRule($id, $name, $pct, $isActive);
-        echo $ok
+        $ok
             ? json_ok(null, 'Cập nhật quy tắc thành công.')
-            : json_err('Cập nhật quy tắc thất bại.');
+            : json_fail('Cập nhật quy tắc thất bại.');
         break;
 
     // ── TOGGLE ────────────────────────────────────────────────
     case 'toggle':
         $id = (int) ($body['id'] ?? 0);
-        if ($id <= 0) { echo json_err('ID không hợp lệ.'); break; }
+        if ($id <= 0) { json_fail('ID không hợp lệ.'); break; }
 
         $ok = $service->toggleRule($id);
-        echo $ok
+        $ok
             ? json_ok(null, 'Đã đổi trạng thái quy tắc.')
-            : json_err('Đổi trạng thái thất bại.');
+            : json_fail('Đổi trạng thái thất bại.');
         break;
 
     // ── DELETE ────────────────────────────────────────────────
     case 'delete':
         $id = (int) ($body['id'] ?? 0);
-        if ($id <= 0) { echo json_err('ID không hợp lệ.'); break; }
+        if ($id <= 0) { json_fail('ID không hợp lệ.'); break; }
 
         try {
             $ok = $service->deleteRule($id);
-            echo $ok
+            $ok
                 ? json_ok(null, 'Đã xóa quy tắc.')
-                : json_err('Xóa quy tắc thất bại.');
+                : json_fail('Xóa quy tắc thất bại.');
         } catch (RuntimeException $e) {
-            echo json_err($e->getMessage());
+            json_fail($e->getMessage());
         }
         break;
 
     // ── DEFAULT ───────────────────────────────────────────────
     default:
         http_response_code(400);
-        echo json_err('Action không hợp lệ.');
+        json_fail('Action không hợp lệ.');
         break;
 }
