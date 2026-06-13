@@ -1,33 +1,38 @@
 'use strict';
- 
+
 const Api = (() => {
- 
+
     // ──────────────────────────────────────────────────────────
     // PRIVATE
     // ──────────────────────────────────────────────────────────
- 
+
     /**
      * Base URL cho thư mục api/ — tự động tính từ gốc site.
      * Ví dụ: http://localhost/gadget-valuation/api/
      *
-     * Nếu deploy dưới subfolder, đặt: const BASE = '/ten-subfolder/api/';
+     * Hỗ trợ <meta name="api-base" content="/gadget-valuation/api/">
+     * để override khi deploy dưới subfolder.
      */
     const BASE = (() => {
-        // Lấy từ <meta name="api-base" content="/api/"> nếu có
+        // Ưu tiên meta tag nếu có
         const meta = document.querySelector('meta[name="api-base"]');
         if (meta) return meta.content.replace(/\/?$/, '/');
- 
-        // Fallback: tự tính từ pathname (lên 1 cấp so với admin/ hoặc staff/)
-        const parts = window.location.pathname.split('/').filter(Boolean);
-        // Bỏ segment cuối (admin, staff) để lấy gốc
-        if (['admin', 'staff'].includes(parts[parts.length - 2] ?? '')) {
-            parts.splice(-2, 1);
-        } else if (['admin', 'staff'].includes(parts[parts.length - 1] ?? '')) {
-            parts.pop();
+
+        // Tự tính: lấy các segments của pathname, bỏ tên file cuối cùng
+        // rồi bỏ tiếp segment admin/staff nếu có
+        const segments = window.location.pathname
+            .split('/')
+            .filter(Boolean)
+            .slice(0, -1); // bỏ tên file (valuation.php, history.php, ...)
+
+        // Nếu segment cuối là admin hoặc staff → đi lên thêm 1 cấp
+        if (['admin', 'staff'].includes(segments[segments.length - 1] ?? '')) {
+            segments.pop();
         }
-        return '/' + parts.join('/') + (parts.length ? '/' : '') + 'api/';
+
+        return '/' + (segments.length ? segments.join('/') + '/' : '') + 'api/';
     })();
- 
+
     /**
      * Hàm fetch nội bộ — tất cả public method đều qua đây.
      *
@@ -39,14 +44,14 @@ const Api = (() => {
     async function _request(endpoint, action, options = {}) {
         const url = new URL(BASE + endpoint, window.location.origin);
         url.searchParams.set('action', action);
- 
+
         const fetchOptions = {
             method:      options.method ?? 'GET',
             headers:     { 'X-Requested-With': 'XMLHttpRequest' },
             credentials: 'same-origin',
             signal:      options.signal ?? null,
         };
- 
+
         // Body chỉ dùng với POST
         if (options.body !== undefined) {
             fetchOptions.method = 'POST';
@@ -60,10 +65,10 @@ const Api = (() => {
                 fetchOptions.body = options.body;
             }
         }
- 
+
         try {
             const response = await fetch(url.toString(), fetchOptions);
- 
+
             // HTTP lỗi nhưng vẫn parse JSON nếu server gửi body
             let json;
             try {
@@ -75,15 +80,15 @@ const Api = (() => {
                     msg:  `HTTP ${response.status}: Server không trả về JSON hợp lệ.`,
                 };
             }
- 
+
             // Nếu server trả HTTP 401/403 nhưng không redirect, tự redirect
             if (response.status === 401) {
                 window.location.href = '/index.php?reason=unauthenticated';
                 return { ok: false, data: null, msg: 'Phiên đăng nhập hết hạn.' };
             }
- 
+
             return json; // { ok, data, msg }
- 
+
         } catch (err) {
             if (err.name === 'AbortError') {
                 return { ok: false, data: null, msg: 'Request đã bị hủy.' };
@@ -96,13 +101,13 @@ const Api = (() => {
             };
         }
     }
- 
+
     // ──────────────────────────────────────────────────────────
     // PUBLIC API
     // ──────────────────────────────────────────────────────────
- 
+
     return {
- 
+
         /**
          * GET request.
          *
@@ -115,20 +120,19 @@ const Api = (() => {
          * @returns {Promise<{ok, data, msg}>}
          */
         async get(endpoint, action, params = {}, signal = null) {
-            // Build URLSearchParams cho params bổ sung (ngoài action)
             const url = new URL(BASE + endpoint, window.location.origin);
             url.searchParams.set('action', action);
             Object.entries(params).forEach(([k, v]) => {
                 if (v !== null && v !== undefined) url.searchParams.set(k, v);
             });
- 
+
             const fetchOptions = {
                 method:      'GET',
                 headers:     { 'X-Requested-With': 'XMLHttpRequest' },
                 credentials: 'same-origin',
                 signal,
             };
- 
+
             try {
                 const response = await fetch(url.toString(), fetchOptions);
                 if (response.status === 401) {
@@ -145,7 +149,7 @@ const Api = (() => {
                 return { ok: false, data: null, msg: 'Lỗi kết nối mạng.' };
             }
         },
- 
+
         /**
          * POST request với FormData.
          *
@@ -163,7 +167,7 @@ const Api = (() => {
         async post(endpoint, action, body = null, signal = null) {
             return _request(endpoint, action, { body: body ?? new FormData(), signal });
         },
- 
+
         /**
          * POST shorthand khi dữ liệu là Object đơn giản (không cần upload file).
          * Server nhận JSON body → dùng json_decode(file_get_contents('php://input'))
@@ -176,7 +180,7 @@ const Api = (() => {
         async postJson(endpoint, action, data = {}) {
             return _request(endpoint, action, { body: data });
         },
- 
+
         /**
          * Upload file (ảnh, v.v.) kèm các field khác.
          * Body là FormData — browser tự handle multipart.
@@ -192,23 +196,23 @@ const Api = (() => {
             if (!onProgress) {
                 return this.post(endpoint, action, formData);
             }
- 
+
             // XMLHttpRequest để có onprogress event
             return new Promise((resolve) => {
                 const url = new URL(BASE + endpoint, window.location.origin);
                 url.searchParams.set('action', action);
- 
+
                 const xhr = new XMLHttpRequest();
                 xhr.open('POST', url.toString());
                 xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
                 xhr.withCredentials = true;
- 
+
                 xhr.upload.onprogress = (e) => {
                     if (e.lengthComputable) {
                         onProgress(Math.round((e.loaded / e.total) * 100));
                     }
                 };
- 
+
                 xhr.onload = () => {
                     try {
                         resolve(JSON.parse(xhr.responseText));
@@ -216,16 +220,16 @@ const Api = (() => {
                         resolve({ ok: false, data: null, msg: 'Server trả về dữ liệu không hợp lệ.' });
                     }
                 };
- 
+
                 xhr.onerror = () => resolve({ ok: false, data: null, msg: 'Lỗi kết nối mạng.' });
                 xhr.send(formData);
             });
         },
- 
+
         // ──────────────────────────────────────────────────────
         // UTILITY — dùng ở mọi nơi trong JS
         // ──────────────────────────────────────────────────────
- 
+
         /**
          * Format số VNĐ.
          * Ví dụ: Api.vnd(15000000) → "15.000.000 ₫"
@@ -237,7 +241,7 @@ const Api = (() => {
                 maximumFractionDigits: 0,
             }).format(amount ?? 0);
         },
- 
+
         /**
          * Escape HTML để tránh XSS khi render dữ liệu từ server vào DOM.
          */
@@ -246,7 +250,7 @@ const Api = (() => {
             d.appendChild(document.createTextNode(str ?? ''));
             return d.innerHTML;
         },
- 
+
         /**
          * Tạo AbortController để cancel request khi cần.
          * Dùng khi user gõ search nhanh (debounce + cancel request cũ).
@@ -260,5 +264,5 @@ const Api = (() => {
             return new AbortController();
         },
     };
- 
+
 })(); // End IIFE — Api object có sẵn toàn cục

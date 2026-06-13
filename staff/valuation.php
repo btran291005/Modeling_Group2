@@ -10,7 +10,6 @@ require_once __DIR__ . '/../config/constants.php';
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/layout.php';
 
-// ✅ Chữ hoa 'Staff' — khớp với giá trị lưu trong DB và session
 requireRole('Staff');
 
 renderHeader('Định giá thiết bị');
@@ -140,10 +139,10 @@ renderHeader('Định giá thiết bị');
                 </div>
 
                 <div class="d-flex gap-2">
-                    <button type="button" id="btn-confirm" class="btn btn-success w-100">
+                    <button type="button" id="btn-confirm" class="btn btn-success w-100" disabled>
                         ✅ Chốt thu mua &amp; Nhập kho
                     </button>
-                    <button type="button" id="btn-decline" class="btn btn-outline-danger">
+                    <button type="button" id="btn-decline" class="btn btn-outline-danger" disabled>
                         ❌ Từ chối
                     </button>
                 </div>

@@ -11,11 +11,11 @@ declare(strict_types=1);
 // ══════════════════════════════════════════════════════════════
 
 // ── Bootstrap ─────────────────────────────────────────────────
-require_once __DIR__ . '/../config/db_connect.php';      // $pdo  (PDO instance)
-require_once __DIR__ . '/../config/constants.php';        // APP_* constants
-require_once __DIR__ . '/../config/ai_module.php';        // getAISuggestedPrice()
-require_once __DIR__ . '/../includes/auth.php';           // isLoggedIn(), isAdmin(), ...
-require_once __DIR__ . '/../api/_helpers.php';            // json_ok(), json_err(), post_str(), ...
+require_once __DIR__ . '/../config/db_connect.php';
+require_once __DIR__ . '/../config/constants.php';
+require_once __DIR__ . '/../config/ai_module.php';
+require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../api/helpers.php';
 require_once __DIR__ . '/../services/ValuationService.php';
 
 // ── Khởi tạo Service ──────────────────────────────────────────
@@ -33,7 +33,7 @@ switch ($action) {
     // Trả về : [{brand_id, brand_name}, ...]
     // ══════════════════════════════════════════════════════════
     case 'brands':
-        require_auth();
+        apiRequireLogin();
 
         $brands = $svc->getBrands();
         json_ok($brands);
@@ -46,7 +46,7 @@ switch ($action) {
     // Trả về : [{model_id, model_name, ram_gb, rom_gb, base_price}, ...]
     // ══════════════════════════════════════════════════════════
     case 'models':
-        require_auth();
+        apiRequireLogin();
 
         $brandId = (int) ($_GET['brand_id'] ?? 0);
         if ($brandId <= 0) {
@@ -68,7 +68,7 @@ switch ($action) {
     // Trả về : [{rule_id, condition_name, deduction_percent}, ...]
     // ══════════════════════════════════════════════════════════
     case 'rules':
-        require_auth();
+        apiRequireLogin();
 
         $rules = $svc->getActiveRules();
         json_ok($rules);
@@ -85,13 +85,13 @@ switch ($action) {
     // ══════════════════════════════════════════════════════════
     case 'valuate':
         require_method('POST');
-        require_auth();
+        apiRequireLogin();
 
         // ── Parse & Validate input ────────────────────────────
         $modelId       = post_int('model_id');
         $batteryHealth = post_int('battery_health', 100);
 
-        // ✅ JS gửi FormData với key rule_ids[] → PHP nhận $_POST['rule_ids']
+        // JS gửi FormData với key rule_ids[] → PHP nhận $_POST['rule_ids']
         $ruleIds = array_map('intval', $_POST['rule_ids'] ?? []);
 
         if ($modelId <= 0) {
@@ -101,8 +101,7 @@ switch ($action) {
             json_err('battery_health phải nằm trong khoảng 1–100.');
         }
 
-        // ── Lấy staffId từ session đúng chuẩn ────────────────
-        // ✅ Session được lưu dưới key 'user' → 'user_id'
+        // Session đúng chuẩn
         $staffId = (int) ($_SESSION['user']['user_id'] ?? 0);
         if ($staffId <= 0) {
             json_err('Không xác định được tài khoản đang đăng nhập.', 401);
@@ -133,7 +132,7 @@ switch ($action) {
     // ══════════════════════════════════════════════════════════
     case 'confirm_purchase':
         require_method('POST');
-        require_auth();
+        apiRequireLogin();
 
         // ── Parse ─────────────────────────────────────────────
         $sessionId     = post_int('session_id');
@@ -155,7 +154,7 @@ switch ($action) {
             json_err('Số điện thoại không hợp lệ (định dạng Việt Nam: 03x/05x/07x/08x/09x).');
         }
 
-        // ✅ Session đúng chuẩn
+        // Session đúng chuẩn
         $staffId = (int) ($_SESSION['user']['user_id'] ?? 0);
         if ($staffId <= 0) {
             json_err('Không xác định được tài khoản đang đăng nhập.', 401);
@@ -188,14 +187,14 @@ switch ($action) {
     // ══════════════════════════════════════════════════════════
     case 'decline':
         require_method('POST');
-        require_auth();
+        apiRequireLogin();
 
         $sessionId = post_int('session_id');
         if ($sessionId <= 0) {
             json_err('Thiếu hoặc sai session_id.');
         }
 
-        // ✅ Session đúng chuẩn
+        // Session đúng chuẩn
         $staffId = (int) ($_SESSION['user']['user_id'] ?? 0);
         if ($staffId <= 0) {
             json_err('Không xác định được tài khoản đang đăng nhập.', 401);
@@ -224,9 +223,9 @@ switch ($action) {
     //            applied_rules}, ...]
     // ══════════════════════════════════════════════════════════
     case 'history':
-        require_auth();
+        apiRequireLogin();
 
-        // ✅ Session đúng chuẩn — key là 'user_id' không phải 'id'
+        // Session đúng chuẩn — key là 'user_id'
         $staffId = (int) ($_SESSION['user']['user_id'] ?? 0);
 
         if ($staffId <= 0) {
@@ -246,7 +245,7 @@ switch ($action) {
     // Trả về : { sessions, total, page, per_page, stats }
     // ══════════════════════════════════════════════════════════
     case 'all_sessions':
-        require_admin();
+        apiRequireAdmin();
 
         $page     = max(1, (int) ($_GET['page']      ?? 1));
         $perPage  = max(1, (int) ($_GET['per_page']  ?? 20));

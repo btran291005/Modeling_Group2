@@ -15,7 +15,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../config/db_connect.php';
 require_once __DIR__ . '/../includes/auth.php';
-require_once __DIR__ . '/../api/_helpers.php';
+require_once __DIR__ . '/../api/helpers.php';
 require_once __DIR__ . '/../services/AuthService.php';
 require_once __DIR__ . '/../services/AccountService.php';
 
@@ -286,7 +286,7 @@ function _send_accounts_json(
 }
 
 /**
-     * Đọc JSON body từ php://input.
+ * Đọc JSON body từ php://input.
  */
 function _parse_json_body(): array
 {

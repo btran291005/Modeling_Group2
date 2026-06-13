@@ -1,17 +1,19 @@
 <?php
-// ============================================================
-// FILE: api/inventory_api.php
-// ============================================================
 
 declare(strict_types=1);
+
+// ══════════════════════════════════════════════════════════════
+// api/inventory_api.php
+// ══════════════════════════════════════════════════════════════
 
 require_once __DIR__ . '/../config/db_connect.php';
 require_once __DIR__ . '/../config/constants.php';
 require_once __DIR__ . '/../includes/auth.php';
-require_once __DIR__ . '/_helpers.php';
+require_once __DIR__ . '/../api/helpers.php';
 require_once __DIR__ . '/../services/InventoryService.php';
 
-requireLogin(); // Staff + Admin đều xem được (Staff chỉ đổi status, không xóa)
+// Dùng apiRequireLogin() để trả JSON 401 thay vì redirect khi chưa đăng nhập
+apiRequireLogin();
 
 $svc    = new InventoryService($pdo);
 $action = get_action();
