@@ -124,4 +124,4 @@ renderHeader('Dữ liệu Cấu hình & Giá');
 </div>
 
 <?php
-renderFooter(['../assets/js/admin_app.js']);
+renderFooter(['../assets/admin_app.js']);

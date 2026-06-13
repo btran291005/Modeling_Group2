@@ -82,5 +82,5 @@ renderHeader('Quản lý Kho Tổng');
 </div>
 
 <?php
-renderFooter(['../assets/js/admin_app.js']);
+renderFooter(['../assets/admin_app.js']);
 ?>

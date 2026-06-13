@@ -11,7 +11,12 @@ declare(strict_types=1);
  */
 class AuthService
 {
-    public function __construct(private readonly PDO $pdo) {}
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo)
+    {
+        $this->pdo = $pdo;
+    }
 
     /**
      * Xác thực đăng nhập bằng email + password.
@@ -89,7 +94,7 @@ class AuthService
                 "INSERT INTO audit_logs (user_id, action, target_table)
                  VALUES (:uid, 'Đăng nhập thành công', 'users')"
             )->execute([':uid' => $userId]);
-        } catch (Throwable) {
+        } catch (Throwable $e) {
             // Không để lỗi log phá vỡ luồng chính
         }
     }

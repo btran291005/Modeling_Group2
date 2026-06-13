@@ -167,4 +167,4 @@ renderHeader('Định giá thiết bị');
 </div>
 
 <?php
-renderFooter(['../assets/js/staff_app.js']);
+renderFooter(['../assets/staff_app.js']);

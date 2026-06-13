@@ -11,11 +11,15 @@ declare(strict_types=1);
  */
 class InventoryService
 {
-    public function __construct(private readonly PDO $pdo) {}
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo)
+    {
+        $this->pdo = $pdo;
+    }
 
     /**
      * Danh sách thiết bị trong kho cho Staff xem.
-     * JOIN đúng bảng gadgets (PK = imei) theo db.sql.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -50,11 +54,10 @@ class InventoryService
 
     /**
      * Cập nhật trạng thái thiết bị theo IMEI.
-     * Staff được phép đổi trạng thái nhưng KHÔNG được xóa.
      *
-     * @param  string $imei      IMEI thiết bị (PK của bảng gadgets)
-     * @param  string $newStatus Trạng thái mới
-     * @return bool   true nếu update thành công (rowCount > 0)
+     * @param  string $imei
+     * @param  string $newStatus
+     * @return bool
      */
     public function updateStatus(string $imei, string $newStatus): bool
     {
@@ -64,7 +67,6 @@ class InventoryService
             return false;
         }
 
-        // Kiểm tra tồn tại
         $check = $this->pdo->prepare(
             "SELECT imei FROM gadgets WHERE imei = :imei LIMIT 1"
         );
@@ -88,8 +90,6 @@ class InventoryService
 
     /**
      * getAdminInventory — Toàn bộ thiết bị trong kho cho Admin.
-     * Kèm hãng, dòng máy, cấu hình, giá chốt mua, khách hàng,
-     * và thông tin nhân viên đã thực hiện phiên định giá / nhập kho.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -130,13 +130,11 @@ class InventoryService
 
     /**
      * deleteItem — Xóa vĩnh viễn một thiết bị khỏi kho (Admin only).
-     * Chỉ xóa bản ghi trong bảng `gadgets`. Không xóa session định giá
-     * gốc (giữ lại để tham chiếu lịch sử).
      *
-     * @param  string $imei  IMEI thiết bị (PK của bảng gadgets)
-     * @return bool   true nếu xóa thành công (rowCount > 0)
-     * @throws InvalidArgumentException  IMEI rỗng / không hợp lệ
-     * @throws RuntimeException          Thiết bị không tồn tại
+     * @param  string $imei
+     * @return bool
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
      */
     public function deleteItem(string $imei): bool
     {
@@ -168,16 +166,12 @@ class InventoryService
 
     /**
      * updateItemDetail — Admin sửa thông tin cơ bản của thiết bị.
-     * Cho phép sửa:
-     *   - imei         (gadgets.imei — PK, đổi sang IMEI mới)
-     *   - status        (gadgets.status)
-     *   - final_price   (valuation_sessions.ai_suggested_price, qua session_id liên kết)
      *
-     * @param  string $imei  IMEI hiện tại của thiết bị (định danh bản ghi cần sửa)
-     * @param  array  $data  ['imei' => ?string, 'status' => ?string, 'final_price' => ?int|float]
-     * @return bool   true nếu có ít nhất 1 thay đổi được áp dụng
-     * @throws InvalidArgumentException  Dữ liệu không hợp lệ
-     * @throws RuntimeException          Thiết bị không tồn tại / IMEI mới đã bị trùng
+     * @param  string $imei
+     * @param  array  $data
+     * @return bool
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
      */
     public function updateItemDetail(string $imei, array $data): bool
     {
@@ -216,7 +210,6 @@ class InventoryService
 
         $this->pdo->beginTransaction();
         try {
-            // 1. Đổi IMEI (PK) nếu khác và chưa bị trùng
             if ($newImei !== null && $newImei !== '' && $newImei !== $gadget['imei']) {
                 $dup = $this->pdo->prepare("SELECT imei FROM gadgets WHERE imei = :imei LIMIT 1");
                 $dup->execute([':imei' => $newImei]);
@@ -231,7 +224,6 @@ class InventoryService
                 $changed = true;
             }
 
-            // 2. Đổi trạng thái nếu có gửi và khác giá trị hiện tại
             $targetImei = ($newImei !== null && $newImei !== '') ? $newImei : $gadget['imei'];
 
             if ($newStatus !== null && $newStatus !== '' && $newStatus !== $gadget['status']) {
@@ -242,7 +234,6 @@ class InventoryService
                 $changed = true;
             }
 
-            // 3. Đổi giá chốt mua (ai_suggested_price của valuation_sessions liên kết)
             if ($hasPrice) {
                 $this->pdo->prepare(
                     "UPDATE valuation_sessions SET ai_suggested_price = :price WHERE session_id = :sid"
@@ -286,6 +277,6 @@ class InventoryService
                 ':a' => $action,
                 ':t' => $table,
             ]);
-        } catch (Throwable) {}
+        } catch (Throwable $e) {}
     }
 }

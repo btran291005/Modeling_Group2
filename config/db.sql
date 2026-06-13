@@ -145,8 +145,8 @@ CREATE TABLE audit_logs (
 -- ---- USERS (12 tài khoản) ----
 -- Password hash của '123456' dùng PASSWORD_BCRYPT
 INSERT INTO users (full_name, email, password_hash, role, status) VALUES
-('Super Admin',      'admin@test.com',   '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Admin', 'Active'),
-('Nguyen Van Staff', 'staff@test.com',   '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Staff', 'Active'),
+('Super Admin',      'admin@test.com',   '$2a$10$jH6O1IrCPgqp2.bu/RbHmeca0tCtmPzs/rIwi/eyKvz2H2Ui5CN8m', 'Admin', 'Active'),
+('Nguyen Van Staff', 'staff@test.com',   '$2a$10$CeNcBOPJsP.W0kcW0bi4ze2hGcD5mNVhMVsN6TvnnMzny51JJ91ui', 'Staff', 'Active'),
 ('Tran Thi Lan',     'lan.tran@test.com','$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Staff', 'Active'),
 ('Le Van Duc',       'duc.le@test.com',  '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Staff', 'Active'),
 ('Pham Thi Hoa',     'hoa.pham@test.com','$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Staff', 'Active'),

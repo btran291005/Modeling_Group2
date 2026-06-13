@@ -8,8 +8,8 @@
 // --------Thông tin kết nối ----------
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'gadget_valuation');
-define('DB_USER', 'root');       // Thay theo môi trường thực tế
-define('DB_PASS', '');           // Thay theo môi trường thực tế
+define('DB_USER', 'root');
+define('DB_PASS', '');
 define('DB_CHARSET', 'utf8mb4');
 
 // --------DSN (Data Source Name) ----------

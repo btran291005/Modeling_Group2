@@ -60,4 +60,4 @@ renderHeader('Lịch sử Định giá cá nhân');
 </div>
 
 <?php
-renderFooter(['../assets/js/staff_app.js']);
+renderFooter(['../assets/staff_app.js']);

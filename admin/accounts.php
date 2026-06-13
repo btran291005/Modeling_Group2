@@ -119,4 +119,4 @@ renderHeader('Quản lý Tài khoản');
 </div>
 
 <?php
-renderFooter(['../assets/js/admin_app.js']);
+renderFooter(['../assets/admin_app.js']);

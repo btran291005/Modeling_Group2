@@ -151,4 +151,4 @@ renderHeader('Bảng điều khiển Tổng quan');
 </div>
 
 <?php
-renderFooter(['../assets/js/admin_app.js']);
+renderFooter(['../assets/admin_app.js']);

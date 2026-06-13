@@ -58,4 +58,4 @@ renderHeader('Quản lý Kho - Nhân viên');
 </div>
 
 <?php
-renderFooter(['../assets/js/staff_app.js']);
+renderFooter(['../assets/staff_app.js']);

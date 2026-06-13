@@ -110,7 +110,7 @@ function renderFooter(array $extraScripts = []): void
     $roleLower = strtolower($role);
     
     // Tự động load file app.js tương ứng với Role
-    $appJs = $roleLower === 'admin' ? '../assets/js/admin_app.js' : '../assets/js/staff_app.js';
+    $appJs = $roleLower === 'admin' ? '../assets/admin_app.js' : '../assets/staff_app.js';
     ?>
         </div></main><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../assets/js/api.js"></script>

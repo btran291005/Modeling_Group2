@@ -14,7 +14,12 @@ declare(strict_types=1);
  */
 class ValuationService
 {
-    public function __construct(private readonly PDO $pdo) {}
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo)
+    {
+        $this->pdo = $pdo;
+    }
 
 
     // ═══════════════════════════════════════════════════════════
@@ -91,33 +96,12 @@ class ValuationService
     /**
      * Thực hiện định giá AI và lưu phiên vào DB.
      *
-     * Luồng xử lý:
-     *   1. Validate input.
-     *   2. Lấy thông tin model + hãng (JOIN brands).
-     *   3. Lọc rule_ids — chỉ giữ những rule thực sự đang active trong DB.
-     *   4. Gọi getAISuggestedPrice() từ config/ai_module.php.
-     *   5. Transaction:
-     *        a. INSERT valuation_sessions   → lấy session_id.
-     *        b. INSERT session_rule_details → mỗi rule 1 dòng (nếu có).
-     *        c. COMMIT.
-     *   6. Trả về mảng kết quả cho API layer.
-     *
      * @param  int   $staffId       $_SESSION['user_id']
      * @param  int   $modelId       Model được Staff chọn
      * @param  int   $batteryHealth Phần trăm pin (1–100)
      * @param  int[] $ruleIds       Danh sách rule_id Staff tích chọn (có thể rỗng)
      *
-     * @return array{
-     *   session_id: int,
-     *   price: float,
-     *   price_formatted: string,
-     *   reasoning: string,
-     *   device_name: string,
-     *   brand_name: string,
-     *   battery_health: int,
-     *   rules_applied: array,
-     *   fallback: bool
-     * }
+     * @return array
      * @throws InvalidArgumentException Nếu model_id <= 0 hay battery_health ngoài phạm vi
      * @throws RuntimeException         Nếu model không tồn tại trong DB
      */
@@ -155,7 +139,6 @@ class ValuationService
         // ── 3. Lọc rule_ids — chỉ giữ rule active trong DB ──
         $validRules = [];
         if (!empty($ruleIds)) {
-            // Tạo placeholders động: ?, ?, ?
             $placeholders = implode(',', array_fill(0, count($ruleIds), '?'));
             $stmtRules = $this->pdo->prepare(
                 "SELECT rule_id, condition_name, deduction_percent
@@ -168,8 +151,6 @@ class ValuationService
         }
 
         // ── 4. Gọi AI Module ─────────────────────────────────
-        // getAISuggestedPrice() được định nghĩa trong config/ai_module.php.
-        // Hàm này trả về array: { price: float, reasoning: string, fallback: bool }
         $aiInput = [
             'model_name'     => $model['model_name'],
             'brand_name'     => $model['brand_name'],
@@ -179,7 +160,6 @@ class ValuationService
             'battery_health' => $batteryHealth,
         ];
         $aiResult = getAISuggestedPrice($aiInput, $validRules);
-        // Đảm bảo giá không âm
         $finalPrice = max(0.0, (float) $aiResult['price']);
 
         // ── 5. Lưu vào DB trong Transaction ──────────────────
@@ -243,16 +223,6 @@ class ValuationService
     /**
      * Xác nhận thu mua thiết bị và nhập kho.
      *
-     * Luồng xử lý:
-     *   1. Validate input (session tồn tại, thuộc Staff này, đang 'Pending').
-     *   2. Validate IMEI chưa tồn tại trong kho.
-     *   3. UPSERT customer (tìm theo phone → dùng lại, không có → INSERT mới).
-     *   4. Transaction:
-     *        a. UPDATE valuation_sessions SET final_status='Purchased', customer_id=...
-     *        b. INSERT gadgets (thiết bị vào kho).
-     *        c. COMMIT.
-     *   5. Trả về thông tin xác nhận.
-     *
      * @param  int    $staffId       $_SESSION['user_id']
      * @param  int    $sessionId     ID phiên định giá cần xác nhận
      * @param  string $imei          IMEI thiết bị (15 chữ số)
@@ -309,7 +279,6 @@ class ValuationService
         }
 
         // ── 3. UPSERT Customer ────────────────────────────────
-        // Tìm theo phone trước; nếu có → tái sử dụng customer_id
         $stmtFindCust = $this->pdo->prepare(
             "SELECT customer_id FROM customers WHERE phone_number = :phone LIMIT 1"
         );
@@ -376,7 +345,6 @@ class ValuationService
 
     /**
      * Ghi nhận khách từ chối đề giá.
-     * Chỉ cho phép decline phiên đang 'Pending' và thuộc Staff này.
      *
      * @return array{session_id:int, new_status:string}
      * @throws InvalidArgumentException | RuntimeException
@@ -387,7 +355,6 @@ class ValuationService
             throw new InvalidArgumentException('session_id không hợp lệ.');
         }
 
-        // Kiểm tra quyền & trạng thái
         $stmt = $this->pdo->prepare(
             "SELECT session_id, user_id, final_status
              FROM   valuation_sessions
@@ -423,14 +390,10 @@ class ValuationService
 
 
     // ═══════════════════════════════════════════════════════════
-    // NHÓM 5: LỊCH SỬ (CŨ — phân trang, dùng cho staff/history.php cũ nếu có)
+    // NHÓM 5: LỊCH SỬ CÁ NHÂN — getHistory()
     // ═══════════════════════════════════════════════════════════
 
     /**
-     * Lịch sử định giá của Staff — có phân trang và lọc theo status, từ khoá.
-     *
-     * @param  string $status  '' = tất cả | 'Pending'|'Purchased'|'Declined'
-     * @param  string $search  Tìm theo tên model hoặc IMEI
      * @return array{sessions: array, total: int, page: int, per_page: int, stats: array}
      */
     public function getHistory(
@@ -444,7 +407,6 @@ class ValuationService
         $perPage = max(1, min(100, $perPage));
         $offset  = ($page - 1) * $perPage;
 
-        // ── Build WHERE động ─────────────────────────────────
         $where  = ['vs.user_id = :uid'];
         $params = [':uid' => $staffId];
 
@@ -459,7 +421,6 @@ class ValuationService
 
         $whereClause = 'WHERE ' . implode(' AND ', $where);
 
-        // ── COUNT tổng ───────────────────────────────────────
         $stmtCount = $this->pdo->prepare(
             "SELECT COUNT(DISTINCT vs.session_id)
              FROM   valuation_sessions vs
@@ -470,7 +431,6 @@ class ValuationService
         $stmtCount->execute($params);
         $total = (int) $stmtCount->fetchColumn();
 
-        // ── Lấy danh sách phân trang ─────────────────────────
         $stmtList = $this->pdo->prepare(
             "SELECT vs.session_id,
                     vs.final_status,
@@ -496,7 +456,6 @@ class ValuationService
         $stmtList->execute();
         $sessions = $stmtList->fetchAll(PDO::FETCH_ASSOC);
 
-        // ── Thống kê nhanh cho Staff ─────────────────────────
         $stmtStats = $this->pdo->prepare(
             "SELECT
                 COUNT(*)                                              AS total,
@@ -521,10 +480,59 @@ class ValuationService
         ];
     }
 
+
+    // ═══════════════════════════════════════════════════════════
+    // NHÓM 6: NHẬT KÝ ĐỊNH GIÁ CÁ NHÂN — getStaffHistory()
+    // ═══════════════════════════════════════════════════════════
+
     /**
-     * Nhật ký định giá toàn hệ thống (Admin only).
-     * Có phân trang và nhiều bộ lọc hơn getHistory().
-     *
+     * @param  int $staffId
+     * @return array<int, array<string, mixed>>
+     */
+    public function getStaffHistory(int $staffId): array
+    {
+        $sql = "
+            SELECT
+                vs.session_id,
+                vs.created_at,
+                vs.battery_health,
+                vs.ai_suggested_price,
+                vs.final_status,
+                dm.model_name,
+                dm.ram_gb,
+                dm.rom_gb,
+                b.brand_name,
+                g.imei,
+                CASE
+                    WHEN vs.final_status = 'Purchased' THEN vs.ai_suggested_price
+                    ELSE NULL
+                END AS final_price,
+                (
+                    SELECT GROUP_CONCAT(apr.condition_name SEPARATOR ', ')
+                    FROM session_rule_details srd
+                    JOIN ai_pricing_rules apr ON srd.rule_id = apr.rule_id
+                    WHERE srd.session_id = vs.session_id
+                ) AS applied_rules
+            FROM valuation_sessions vs
+            JOIN device_models dm ON vs.model_id   = dm.model_id
+            JOIN brands        b  ON dm.brand_id   = b.brand_id
+            LEFT JOIN gadgets  g  ON g.session_id  = vs.session_id
+            WHERE vs.user_id = :staff_id
+            ORDER BY vs.created_at DESC
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':staff_id' => $staffId]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+
+    // ═══════════════════════════════════════════════════════════
+    // NHÓM 7: NHẬT KÝ TOÀN HỆ THỐNG (Admin) — getAllSessions()
+    // ═══════════════════════════════════════════════════════════
+
+    /**
      * @return array{sessions: array, total: int, page: int, per_page: int, stats: array}
      */
     public function getAllSessions(
@@ -606,7 +614,6 @@ class ValuationService
         $stmtList->execute();
         $sessions = $stmtList->fetchAll(PDO::FETCH_ASSOC);
 
-        // Stats toàn hệ thống
         $stats = $this->pdo
             ->query(
                 "SELECT
@@ -632,70 +639,10 @@ class ValuationService
 
 
     // ═══════════════════════════════════════════════════════════
-    // NHÓM 6: NHẬT KÝ ĐỊNH GIÁ CÁ NHÂN — getStaffHistory()
+    // NHÓM 8: NHẬT KÝ TOÀN HỆ THỐNG — getGlobalValuationLogs()
     // ═══════════════════════════════════════════════════════════
 
     /**
-     * Lấy danh sách nhật ký định giá của 1 Staff cụ thể (KHÔNG phân trang).
-     * Kèm thông tin Hãng, Dòng máy, Cấu hình, Pin, Giá AI đề xuất,
-     * Giá chốt mua (nếu đã thu mua), trạng thái phiên, các quy tắc
-     * khấu trừ đã áp dụng (đại diện cho mức trầy xước/ngoại hình).
-     *
-     * Sắp xếp theo created_at giảm dần (mới nhất lên đầu).
-     *
-     * @param  int $staffId  user_id của Staff đang đăng nhập
-     * @return array<int, array<string, mixed>>
-     */
-    public function getStaffHistory(int $staffId): array
-    {
-        $sql = "
-            SELECT
-                vs.session_id,
-                vs.created_at,
-                vs.battery_health,
-                vs.ai_suggested_price,
-                vs.final_status,
-                dm.model_name,
-                dm.ram_gb,
-                dm.rom_gb,
-                b.brand_name,
-                g.imei,
-                CASE
-                    WHEN vs.final_status = 'Purchased' THEN vs.ai_suggested_price
-                    ELSE NULL
-                END AS final_price,
-                (
-                    SELECT GROUP_CONCAT(apr.condition_name SEPARATOR ', ')
-                    FROM session_rule_details srd
-                    JOIN ai_pricing_rules apr ON srd.rule_id = apr.rule_id
-                    WHERE srd.session_id = vs.session_id
-                ) AS applied_rules
-            FROM valuation_sessions vs
-            JOIN device_models dm ON vs.model_id   = dm.model_id
-            JOIN brands        b  ON dm.brand_id   = b.brand_id
-            LEFT JOIN gadgets  g  ON g.session_id  = vs.session_id
-            WHERE vs.user_id = :staff_id
-            ORDER BY vs.created_at DESC
-        ";
-
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([':staff_id' => $staffId]);
-
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-
-    // ═══════════════════════════════════════════════════════════
-    // NHÓM 7: NHẬT KÝ ĐỊNH GIÁ TOÀN HỆ THỐNG (Admin) — getGlobalValuationLogs()
-    // ═══════════════════════════════════════════════════════════
-
-    /**
-     * Lấy toàn bộ lịch sử định giá của TẤT CẢ nhân viên (KHÔNG phân trang).
-     * Dùng cho Admin theo dõi hiệu suất Staff và độ chính xác của AI
-     * (so sánh ai_suggested_price với final_price khi đã Purchased).
-     *
-     * Sắp xếp theo created_at giảm dần (mới nhất lên đầu).
-     *
      * @return array<int, array<string, mixed>>
      */
     public function getGlobalValuationLogs(): array
