@@ -2,15 +2,6 @@
 /**
  * admin/accounts.php
  * Trang quản lý tài khoản người dùng — Admin only
- *
- * Tính năng:
- *   - Bảng danh sách tài khoản (phân trang phía client qua AJAX)
- *   - Thanh tìm kiếm + filter theo Role / Status
- *   - Modal Thêm tài khoản mới
- *   - Modal Sửa thông tin (họ tên, email, role)
- *   - Khoá / mở khoá tài khoản (inline toggle)
- *   - Modal Reset mật khẩu
- *   - Xoá tài khoản (với confirm dialog)
  */
 
 require_once __DIR__ . '/../includes/auth.php';
@@ -18,11 +9,9 @@ require_once __DIR__ . '/../config/db_connect.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/layout.php';
 
-// Chỉ Admin được vào
 requireAdmin();
-$currentUser = getCurrentUser();
+$currentUser = currentUser(); // Sửa: dùng currentUser() thay vì getCurrentUser()
 
-// Render layout
 renderHtmlHead('Quản lý Tài khoản', [
     '../assets/css/pages/admin/accounts.css'
 ]);
@@ -57,7 +46,6 @@ renderTopbar(
     <div class="card accounts-filter-card">
         <div class="card-body">
             <div class="filter-row">
-                <!-- Ô tìm kiếm -->
                 <div class="filter-search">
                     <span class="filter-search-icon">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -72,22 +60,16 @@ renderTopbar(
                         autocomplete="off"
                     >
                 </div>
-
-                <!-- Filter Role -->
                 <select class="form-select filter-select" id="filter-role">
                     <option value="">Tất cả Role</option>
                     <option value="Admin">👑 Admin</option>
                     <option value="Staff">👤 Staff</option>
                 </select>
-
-                <!-- Filter Status -->
                 <select class="form-select filter-select" id="filter-status">
                     <option value="">Tất cả trạng thái</option>
                     <option value="Active">Hoạt động</option>
                     <option value="Locked">Đã khóa</option>
                 </select>
-
-                <!-- Nút reset filter -->
                 <button class="btn btn-secondary" id="btn-reset-filter">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/>
@@ -100,25 +82,18 @@ renderTopbar(
 
     <!-- ---------- Bảng Danh Sách ---------- -->
     <div class="card">
-
-        <!-- Loading overlay -->
         <div class="table-loading" id="table-loading">
             <div class="table-loading-spinner"></div>
             <span>Đang tải dữ liệu...</span>
         </div>
-
-        <div class="card-body-flush" id="table-container">
-            <!-- JS sẽ render bảng vào đây -->
-        </div>
-
-        <!-- Footer: phân trang + thông tin -->
+        <div class="card-body-flush" id="table-container"></div>
         <div class="card-footer" id="table-footer">
             <span class="pagination-info" id="pagination-info">—</span>
             <div class="pagination" id="pagination-controls"></div>
         </div>
     </div>
 
-</div><!-- end .page-content -->
+</div>
 
 
 <!-- ================================================================
@@ -313,7 +288,7 @@ renderTopbar(
 
 
 <!-- ================================================================
-     MODAL: XOÁ TÀI KHOẢN (Confirm)
+     MODAL: XOÁ TÀI KHOẢN
      ================================================================ -->
 <div class="modal-backdrop" id="modal-delete">
     <div class="modal modal-sm">
@@ -365,7 +340,7 @@ renderTopbar(
 
 
 <!-- ================================================================
-     TOAST NOTIFICATION (góc phải dưới)
+     TOAST NOTIFICATION
      ================================================================ -->
 <div class="toast-container" id="toast-container"></div>
 
@@ -375,6 +350,8 @@ renderTopbar(
 
 <!-- ================================================================
      JAVASCRIPT — Accounts Management
+     Sửa: fetch gọi '../api/account_api.php' (đúng tên file)
+          đọc data.success, data.users, data.pagination, data.message
      ================================================================ -->
 <script>
 (function () {
@@ -382,11 +359,11 @@ renderTopbar(
 
     // ===== STATE =====
     const state = {
-        page:       1,
-        perPage:    10,
-        search:     '',
-        roleFilter:   '',
-        statusFilter: '',
+        page:          1,
+        perPage:       10,
+        search:        '',
+        roleFilter:    '',
+        statusFilter:  '',
         debounceTimer: null,
     };
 
@@ -400,8 +377,8 @@ renderTopbar(
     const paginationInfo = document.getElementById('pagination-info');
     const paginationCtrl = document.getElementById('pagination-controls');
 
-    // Current admin user_id (để disable các action lên chính mình)
-    const CURRENT_USER_ID = <?= (int) $currentUser['user_id'] ?>;
+    // Current admin user_id
+    const CURRENT_USER_ID = <?= (int) ($currentUser['user_id'] ?? 0) ?>;
 
     // ===== INIT =====
     loadUsers();
@@ -440,6 +417,8 @@ renderTopbar(
     });
 
     // ===== API: Load danh sách users =====
+    // Sửa: gọi '../api/account_api.php' với action=get_list
+    //       đọc data.success, data.users, data.pagination, data.message
     async function loadUsers() {
         tableLoading.classList.add('visible');
 
@@ -452,11 +431,11 @@ renderTopbar(
         fd.append('per_page',      state.perPage);
 
         try {
-            const res  = await fetch('../api/account.php', { method: 'POST', body: fd });
+            const res  = await fetch('../api/account_api.php', { method: 'POST', body: fd });
             const data = await res.json();
 
             if (!data.success) {
-                showTableError(data.message);
+                showTableError(data.message || 'Lỗi tải dữ liệu.');
                 return;
             }
 
@@ -486,7 +465,7 @@ renderTopbar(
             const isActive = u.status === 'Active';
             const isAdmin  = u.role === 'Admin';
 
-            const avatar = u.full_name.charAt(0).toUpperCase();
+            const avatar   = u.full_name.charAt(0).toUpperCase();
             const avatarBg = isAdmin ? 'avatar-admin' : 'avatar-staff';
 
             const statusBadge = isActive
@@ -530,7 +509,6 @@ renderTopbar(
                     <td class="td-mono">${formatDate(u.created_at)}</td>
                     <td>
                         <div class="td-action">
-                            <!-- Sửa -->
                             <button class="btn btn-sm btn-secondary action-edit"
                                     data-id="${u.user_id}"
                                     data-name="${escHtml(u.full_name)}"
@@ -543,9 +521,7 @@ renderTopbar(
                                 </svg>
                                 Sửa
                             </button>
-                            <!-- Khoá / mở -->
                             ${lockBtn}
-                            <!-- Reset pass -->
                             <button class="btn btn-sm btn-ghost action-reset-pass"
                                     data-id="${u.user_id}"
                                     data-name="${escHtml(u.full_name)}"
@@ -555,7 +531,6 @@ renderTopbar(
                                     <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                                 </svg>
                             </button>
-                            <!-- Xoá -->
                             <button class="btn btn-sm btn-ghost btn-ghost-danger action-delete"
                                     data-id="${u.user_id}"
                                     data-email="${escHtml(u.email)}"
@@ -586,12 +561,12 @@ renderTopbar(
                 </table>
             </div>`;
 
-        // Gắn event listeners cho các nút action
         bindTableActions();
     }
 
     // ===== RENDER: Pagination =====
     function renderPagination(p) {
+        if (!p) return;
         const start = (p.current_page - 1) * p.per_page + 1;
         const end   = Math.min(p.current_page * p.per_page, p.total);
 
@@ -599,45 +574,27 @@ renderTopbar(
             ? 'Không có kết quả'
             : `Hiển thị ${start}–${end} / ${p.total} tài khoản`;
 
-        if (p.total_pages <= 1) {
-            paginationCtrl.innerHTML = '';
-            return;
-        }
+        if (p.total_pages <= 1) { paginationCtrl.innerHTML = ''; return; }
 
         let html = '';
-
-        // Prev
         html += `<button class="page-btn ${p.current_page <= 1 ? 'disabled' : ''}"
-                         onclick="gotoPage(${p.current_page - 1})" ${p.current_page <= 1 ? 'disabled' : ''}>
-                     ‹
-                 </button>`;
+                         onclick="gotoPage(${p.current_page - 1})" ${p.current_page <= 1 ? 'disabled' : ''}>‹</button>`;
 
-        // Trang số
         for (let i = 1; i <= p.total_pages; i++) {
-            if (
-                i === 1 || i === p.total_pages ||
-                Math.abs(i - p.current_page) <= 1
-            ) {
+            if (i === 1 || i === p.total_pages || Math.abs(i - p.current_page) <= 1) {
                 html += `<button class="page-btn ${i === p.current_page ? 'active' : ''}"
                                  onclick="gotoPage(${i})">${i}</button>`;
-            } else if (
-                i === p.current_page - 2 ||
-                i === p.current_page + 2
-            ) {
+            } else if (i === p.current_page - 2 || i === p.current_page + 2) {
                 html += `<span class="page-btn">…</span>`;
             }
         }
 
-        // Next
         html += `<button class="page-btn ${p.current_page >= p.total_pages ? 'disabled' : ''}"
-                         onclick="gotoPage(${p.current_page + 1})" ${p.current_page >= p.total_pages ? 'disabled' : ''}>
-                     ›
-                 </button>`;
+                         onclick="gotoPage(${p.current_page + 1})" ${p.current_page >= p.total_pages ? 'disabled' : ''}>›</button>`;
 
         paginationCtrl.innerHTML = html;
     }
 
-    // Export gotoPage cho onclick handler inline
     window.gotoPage = function (page) {
         state.page = page;
         loadUsers();
@@ -645,33 +602,21 @@ renderTopbar(
 
     // ===== BIND: Table Action Buttons =====
     function bindTableActions() {
-        // Edit
         document.querySelectorAll('.action-edit').forEach(btn => {
             btn.addEventListener('click', function () {
-                openEditModal({
-                    id:    this.dataset.id,
-                    name:  this.dataset.name,
-                    email: this.dataset.email,
-                    role:  this.dataset.role,
-                });
+                openEditModal({ id: this.dataset.id, name: this.dataset.name, email: this.dataset.email, role: this.dataset.role });
             });
         });
-
-        // Toggle status
         document.querySelectorAll('.action-toggle-status').forEach(btn => {
             btn.addEventListener('click', function () {
                 toggleStatus(this.dataset.id, this.dataset.name, this.dataset.status);
             });
         });
-
-        // Reset password
         document.querySelectorAll('.action-reset-pass').forEach(btn => {
             btn.addEventListener('click', function () {
                 openResetModal({ id: this.dataset.id, name: this.dataset.name });
             });
         });
-
-        // Delete
         document.querySelectorAll('.action-delete').forEach(btn => {
             btn.addEventListener('click', function () {
                 openDeleteModal({ id: this.dataset.id, email: this.dataset.email });
@@ -679,7 +624,6 @@ renderTopbar(
         });
     }
 
-    // ===== TABLE HELPERS =====
     function showTableError(msg) {
         tableContainer.innerHTML = `
             <div class="empty-state">
@@ -714,7 +658,8 @@ renderTopbar(
 
         setLoading(btn, true);
         try {
-            const res  = await fetch('../api/account.php', { method: 'POST', body: fd });
+            // Sửa: gọi '../api/account_api.php'
+            const res  = await fetch('../api/account_api.php', { method: 'POST', body: fd });
             const data = await res.json();
             if (data.success) {
                 closeModal('modal-create');
@@ -755,11 +700,11 @@ renderTopbar(
     }
 
     document.getElementById('btn-edit-submit').addEventListener('click', async function () {
-        const btn     = this;
-        const userId  = document.getElementById('e-user-id').value;
+        const btn      = this;
+        const userId   = document.getElementById('e-user-id').value;
         const fullName = document.getElementById('e-fullname').value.trim();
-        const email   = document.getElementById('e-email').value.trim();
-        const role    = document.getElementById('e-role').value;
+        const email    = document.getElementById('e-email').value.trim();
+        const role     = document.getElementById('e-role').value;
 
         clearAlert('edit-alert');
 
@@ -772,7 +717,7 @@ renderTopbar(
 
         setLoading(btn, true);
         try {
-            const res  = await fetch('../api/account.php', { method: 'POST', body: fd });
+            const res  = await fetch('../api/account_api.php', { method: 'POST', body: fd });
             const data = await res.json();
             if (data.success) {
                 closeModal('modal-edit');
@@ -802,7 +747,7 @@ renderTopbar(
         fd.append('user_id', userId);
 
         try {
-            const res  = await fetch('../api/account.php', { method: 'POST', body: fd });
+            const res  = await fetch('../api/account_api.php', { method: 'POST', body: fd });
             const data = await res.json();
             if (data.success) {
                 showToast(data.message, 'success');
@@ -821,7 +766,7 @@ renderTopbar(
      * ============================ */
 
     function openResetModal({ id, name }) {
-        document.getElementById('r-user-id').value = id;
+        document.getElementById('r-user-id').value  = id;
         document.getElementById('r-password').value = '';
         document.getElementById('reset-subtitle').textContent = name;
         clearAlert('reset-alert');
@@ -842,7 +787,7 @@ renderTopbar(
 
         setLoading(btn, true);
         try {
-            const res  = await fetch('../api/account.php', { method: 'POST', body: fd });
+            const res  = await fetch('../api/account_api.php', { method: 'POST', body: fd });
             const data = await res.json();
             if (data.success) {
                 closeModal('modal-reset');
@@ -863,8 +808,8 @@ renderTopbar(
      * ============================ */
 
     function openDeleteModal({ id, email }) {
-        document.getElementById('d-user-id').value    = id;
-        document.getElementById('d-user-email').textContent = email;
+        document.getElementById('d-user-id').value           = id;
+        document.getElementById('d-user-email').textContent  = email;
         clearAlert('delete-alert');
         openModal('modal-delete');
     }
@@ -881,7 +826,7 @@ renderTopbar(
 
         setLoading(btn, true);
         try {
-            const res  = await fetch('../api/account.php', { method: 'POST', body: fd });
+            const res  = await fetch('../api/account_api.php', { method: 'POST', body: fd });
             const data = await res.json();
             if (data.success) {
                 closeModal('modal-delete');
@@ -911,39 +856,32 @@ renderTopbar(
 
 
     /* ============================
-     * MODAL SYSTEM (open/close)
+     * MODAL SYSTEM
      * ============================ */
 
     function openModal(id) {
         document.getElementById(id).classList.add('visible');
         document.body.style.overflow = 'hidden';
     }
-
     function closeModal(id) {
         document.getElementById(id).classList.remove('visible');
         document.body.style.overflow = '';
     }
 
-    // Nút đóng modal (X + backdrop click)
     document.querySelectorAll('.modal-close, [data-modal]').forEach(el => {
         el.addEventListener('click', function () {
             const modalId = this.dataset.modal || this.closest('.modal-backdrop')?.id;
             if (modalId) closeModal(modalId);
         });
     });
-
     document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
         backdrop.addEventListener('click', function (e) {
             if (e.target === this) closeModal(this.id);
         });
     });
-
-    // ESC để đóng modal
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
-            document.querySelectorAll('.modal-backdrop.visible').forEach(m => {
-                closeModal(m.id);
-            });
+            document.querySelectorAll('.modal-backdrop.visible').forEach(m => closeModal(m.id));
         }
     });
 
@@ -960,7 +898,7 @@ renderTopbar(
         };
         document.getElementById(containerId).innerHTML = `
             <div class="alert alert-${type}" style="margin-bottom:var(--space-4);">
-                <svg class="alert-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     ${icons[type] || icons.danger}
                 </svg>
                 <span>${escHtml(message)}</span>
@@ -974,11 +912,10 @@ renderTopbar(
 
     function setLoading(btn, loading) {
         btn.disabled = loading;
-        const span = btn.querySelector('span');
-        if (span) span.textContent = loading ? 'Đang xử lý...' : btn.dataset.origText || span.textContent;
-        if (!btn.dataset.origText && !loading) {} // keep as is
+        const span   = btn.querySelector('span');
         if (loading && !btn.dataset.origText) {
             btn.dataset.origText = span?.textContent || '';
+            if (span) span.textContent = 'Đang xử lý...';
         }
         if (!loading && btn.dataset.origText) {
             if (span) span.textContent = btn.dataset.origText;
@@ -997,11 +934,7 @@ renderTopbar(
             </svg>
             <span>${escHtml(message)}</span>`;
         document.getElementById('toast-container').appendChild(toast);
-
-        // Trigger animation
         requestAnimationFrame(() => toast.classList.add('show'));
-
-        // Tự ẩn sau 3.5s
         setTimeout(() => {
             toast.classList.remove('show');
             setTimeout(() => toast.remove(), 350);

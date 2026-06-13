@@ -6,22 +6,21 @@ declare(strict_types=1);
  * api/account_api.php
  *
  * Endpoint xử lý các nghiệp vụ tài khoản.
- * Route: switch($_GET['action'])
+ * Route: switch(get_action())
  *
- * Public  (không cần đăng nhập): login
- * Private (cần đăng nhập)       : logout, me
- * Admin only                     : list, create, update, toggle_status, reset_password, delete
+ * Public  : login
+ * Private : logout, me
+ * Admin   : get_list, create, update, toggle_status, reset_password, delete
  */
 
-require_once __DIR__ . '/../config/db_connect.php';      // $pdo
-require_once __DIR__ . '/../includes/auth.php';           // isLoggedIn(), requireRole()...
-require_once __DIR__ . '/../api/_helpers.php';            // json_ok(), json_err(), post_str()...
+require_once __DIR__ . '/../config/db_connect.php';
+require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../api/_helpers.php';
 require_once __DIR__ . '/../services/AuthService.php';
+require_once __DIR__ . '/../services/AccountService.php';
 
-// Chỉ chấp nhận POST (ngoại trừ action=me có thể GET)
 $action = get_action();
 
-// ── Router ────────────────────────────────────────────────────────
 switch ($action) {
 
     // ══════════════════════════════════════════════════════════════
@@ -32,34 +31,29 @@ switch ($action) {
     case 'login':
         require_method('POST');
 
-        // Đọc JSON body (login.php gửi fetch với Content-Type: application/json)
         $body     = _parse_json_body();
         $email    = trim($body['email']    ?? post_str('email'));
         $password = trim($body['password'] ?? post_str('password'));
 
         try {
-            $svc  = new AuthService($pdo);
-            $user = $svc->login($email, $password);
+            $authSvc = new AuthService($pdo);
+            $user    = $authSvc->login($email, $password);
 
-            // Tái tạo Session ID sau khi xác thực → chống Session Fixation
             session_regenerate_id(true);
 
-            // Lưu thông tin tối thiểu vào session
             $_SESSION['user'] = [
                 'user_id'   => $user['user_id'],
                 'full_name' => $user['full_name'],
                 'email'     => $user['email'],
-                'role'      => $user['role'],   // 'Admin' | 'Staff'
+                'role'      => $user['role'],
             ];
 
-            // Ghi audit log (tách biệt, không ảnh hưởng response nếu lỗi)
-            $svc->logLoginSuccess($user['user_id']);
+            $authSvc->logLoginSuccess($user['user_id']);
 
-            // Tính redirect URL theo role
             $redirect = match ($user['role']) {
                 'Admin' => '/admin/dashboard.php',
                 'Staff' => '/staff/dashboard.php',
-                default => '/login.php',
+                default => '/index.php',
             };
 
             json_ok([
@@ -69,9 +63,9 @@ switch ($action) {
             ], 'Đăng nhập thành công!');
 
         } catch (InvalidArgumentException $e) {
-            json_err($e->getMessage(), 422);   // Validation error
+            json_err($e->getMessage(), 422);
         } catch (RuntimeException $e) {
-            json_err($e->getMessage(), 401);   // Auth error
+            json_err($e->getMessage(), 401);
         }
         break;
 
@@ -84,10 +78,8 @@ switch ($action) {
         require_method('POST');
         apiRequireLogin();
 
-        // Xoá toàn bộ session data
         $_SESSION = [];
 
-        // Xoá cookie phía trình duyệt
         if (ini_get('session.use_cookies')) {
             $params = session_get_cookie_params();
             setcookie(
@@ -101,7 +93,6 @@ switch ($action) {
         }
 
         session_destroy();
-
         json_ok(null, 'Đăng xuất thành công.');
         break;
 
@@ -109,7 +100,6 @@ switch ($action) {
     // ══════════════════════════════════════════════════════════════
     // case 'me'
     // GET /api/account_api.php?action=me
-    // Trả về thông tin người dùng đang đăng nhập
     // ══════════════════════════════════════════════════════════════
     case 'me':
         apiRequireLogin();
@@ -118,68 +108,27 @@ switch ($action) {
 
 
     // ══════════════════════════════════════════════════════════════
-    // case 'list'
-    // GET /api/account_api.php?action=list
-    //     &page=1&per_page=15&search=&role=&status=
+    // case 'get_list'
+    // POST /api/account_api.php?action=get_list
     // Admin only
+    // admin/accounts.php JS gửi FormData với các field:
+    //   search, role_filter, status_filter, page, per_page
+    // Trả về format: { success, users, pagination }
     // ══════════════════════════════════════════════════════════════
-    case 'list':
+    case 'get_list':
         apiRequireAdmin();
 
-        $search   = trim($_GET['search'] ?? '');
-        $role     = trim($_GET['role']   ?? '');
-        $status   = trim($_GET['status'] ?? '');
-        $page     = max(1, (int) ($_GET['page']     ?? 1));
-        $perPage  = max(5, min(50, (int) ($_GET['per_page'] ?? 15)));
-
-        // Build WHERE
-        $where  = [];
-        $params = [];
-        if ($search !== '') {
-            $where[]           = '(full_name LIKE :s OR email LIKE :s)';
-            $params[':s']      = "%{$search}%";
-        }
-        if (in_array($role, ['Admin', 'Staff'], true)) {
-            $where[]           = 'role = :role';
-            $params[':role']   = $role;
-        }
-        if (in_array($status, ['Active', 'Locked'], true)) {
-            $where[]           = 'status = :status';
-            $params[':status'] = $status;
-        }
-        $whereSQL = $where ? 'WHERE ' . implode(' AND ', $where) : '';
-
-        // Count
-        $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM users {$whereSQL}");
-        $stmtCount->execute($params);
-        $total      = (int) $stmtCount->fetchColumn();
-        $totalPages = max(1, (int) ceil($total / $perPage));
-        $page       = min($page, $totalPages);
-        $offset     = ($page - 1) * $perPage;
-
-        // Fetch
-        $stmtList = $pdo->prepare(
-            "SELECT user_id, full_name, email, role, status, created_at
-             FROM   users
-             {$whereSQL}
-             ORDER  BY created_at DESC
-             LIMIT  :lim OFFSET :off"
+        $svc    = new AccountService($pdo);
+        $result = $svc->getList(
+            post_str('search'),
+            post_str('role_filter'),
+            post_str('status_filter'),
+            max(1, post_int('page', 1)),
+            max(5, min(50, post_int('per_page', 10)))
         );
-        foreach ($params as $k => $v) $stmtList->bindValue($k, $v);
-        $stmtList->bindValue(':lim', $perPage, PDO::PARAM_INT);
-        $stmtList->bindValue(':off', $offset,  PDO::PARAM_INT);
-        $stmtList->execute();
-        $users = $stmtList->fetchAll(PDO::FETCH_ASSOC);
 
-        json_ok([
-            'users'      => $users,
-            'pagination' => [
-                'total'       => $total,
-                'per_page'    => $perPage,
-                'current_page'=> $page,
-                'total_pages' => $totalPages,
-            ],
-        ]);
+        // admin/accounts.php JS đọc data.success, data.users, data.pagination
+        _send_accounts_json(true, $result['users'], $result['pagination'], '');
         break;
 
 
@@ -192,37 +141,21 @@ switch ($action) {
         require_method('POST');
         apiRequireAdmin();
 
-        $fullName = post_str('full_name');
-        $email    = post_str('email');
-        $password = post_str('password');
-        $role     = post_str('role', 'Staff');
+        $svc = new AccountService($pdo);
 
-        // Validate
-        $errors = [];
-        if (mb_strlen($fullName) < 2)                  $errors[] = 'Họ tên phải có ít nhất 2 ký tự.';
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Email không hợp lệ.';
-        if (mb_strlen($password) < 6)                  $errors[] = 'Mật khẩu phải có ít nhất 6 ký tự.';
-        if (!in_array($role, ['Admin', 'Staff'], true)) $errors[] = 'Role không hợp lệ.';
-        if ($errors) json_err(implode(' ', $errors), 422);
-
-        // Kiểm tra email trùng
-        $dup = $pdo->prepare("SELECT COUNT(*) FROM users WHERE email = :e");
-        $dup->execute([':e' => $email]);
-        if ((int) $dup->fetchColumn() > 0) json_err('Email này đã được sử dụng.', 409);
-
-        // Insert
-        $pdo->prepare(
-            "INSERT INTO users (full_name, email, password_hash, role, status)
-             VALUES (:n, :e, :h, :r, 'Active')"
-        )->execute([
-            ':n' => $fullName,
-            ':e' => $email,
-            ':h' => password_hash($password, PASSWORD_DEFAULT),
-            ':r' => $role,
-        ]);
-
-        _audit($pdo, "Tạo tài khoản mới: {$email} (Role: {$role})", 'users');
-        json_ok(['user_id' => (int) $pdo->lastInsertId()], "Tạo tài khoản {$email} thành công.");
+        try {
+            $userId = $svc->create(
+                post_str('full_name'),
+                post_str('email'),
+                post_str('password'),
+                post_str('role', 'Staff')
+            );
+            _send_accounts_json(true, null, null, 'Tạo tài khoản thành công.');
+        } catch (InvalidArgumentException $e) {
+            _send_accounts_json(false, null, null, $e->getMessage());
+        } catch (RuntimeException $e) {
+            _send_accounts_json(false, null, null, $e->getMessage());
+        }
         break;
 
 
@@ -235,65 +168,45 @@ switch ($action) {
         require_method('POST');
         apiRequireAdmin();
 
-        $userId   = post_int('user_id');
-        $fullName = post_str('full_name');
-        $email    = post_str('email');
-        $role     = post_str('role');
+        $svc = new AccountService($pdo);
 
-        if ($userId <= 0 || mb_strlen($fullName) < 2
-            || !filter_var($email, FILTER_VALIDATE_EMAIL)
-            || !in_array($role, ['Admin', 'Staff'], true)) {
-            json_err('Dữ liệu không hợp lệ.', 422);
+        try {
+            $svc->update(
+                post_int('user_id'),
+                post_str('full_name'),
+                post_str('email'),
+                post_str('role')
+            );
+            _send_accounts_json(true, null, null, 'Cập nhật tài khoản thành công.');
+        } catch (InvalidArgumentException $e) {
+            _send_accounts_json(false, null, null, $e->getMessage());
+        } catch (RuntimeException $e) {
+            _send_accounts_json(false, null, null, $e->getMessage());
         }
-
-        // Email trùng với user khác
-        $dup = $pdo->prepare("SELECT COUNT(*) FROM users WHERE email = :e AND user_id != :id");
-        $dup->execute([':e' => $email, ':id' => $userId]);
-        if ((int) $dup->fetchColumn() > 0) json_err('Email đã được dùng bởi tài khoản khác.', 409);
-
-        $pdo->prepare(
-            "UPDATE users SET full_name = :n, email = :e, role = :r WHERE user_id = :id"
-        )->execute([':n' => $fullName, ':e' => $email, ':r' => $role, ':id' => $userId]);
-
-        _audit($pdo, "Cập nhật tài khoản ID#{$userId}: {$email}", 'users');
-        json_ok(null, 'Cập nhật tài khoản thành công.');
         break;
 
 
     // ══════════════════════════════════════════════════════════════
     // case 'toggle_status'
     // POST /api/account_api.php?action=toggle_status
-    // Admin only — khoá / mở khoá tài khoản
+    // Admin only
     // ══════════════════════════════════════════════════════════════
     case 'toggle_status':
         require_method('POST');
         apiRequireAdmin();
 
-        $userId = post_int('user_id');
-        if ($userId <= 0) json_err('user_id không hợp lệ.', 422);
+        $svc           = new AccountService($pdo);
+        $currentUserId = (int) ($_SESSION['user']['user_id'] ?? 0);
 
-        // Không tự khoá chính mình
-        if ($userId === (int) ($_SESSION['user']['user_id'] ?? 0)) {
-            json_err('Bạn không thể khoá tài khoản của chính mình.', 403);
+        try {
+            $result = $svc->toggleStatus(post_int('user_id'), $currentUserId);
+            $msg    = $result['new_status'] === 'Locked'
+                ? "Đã khoá tài khoản {$result['email']}."
+                : "Đã mở khoá tài khoản {$result['email']}.";
+            _send_accounts_json(true, null, null, $msg);
+        } catch (InvalidArgumentException | RuntimeException $e) {
+            _send_accounts_json(false, null, null, $e->getMessage());
         }
-
-        $stmt = $pdo->prepare("SELECT status, email FROM users WHERE user_id = :id");
-        $stmt->execute([':id' => $userId]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        if (!$user) json_err('Tài khoản không tồn tại.', 404);
-
-        $newStatus = $user['status'] === 'Active' ? 'Locked' : 'Active';
-        $pdo->prepare("UPDATE users SET status = :s WHERE user_id = :id")
-            ->execute([':s' => $newStatus, ':id' => $userId]);
-
-        $verb = $newStatus === 'Locked' ? 'Khoá' : 'Mở khoá';
-        _audit($pdo, "{$verb} tài khoản: {$user['email']}", 'users');
-
-        $msg = $newStatus === 'Locked'
-            ? "Đã khoá tài khoản {$user['email']}."
-            : "Đã mở khoá tài khoản {$user['email']}.";
-
-        json_ok(['new_status' => $newStatus], $msg);
         break;
 
 
@@ -306,64 +219,35 @@ switch ($action) {
         require_method('POST');
         apiRequireAdmin();
 
-        $userId   = post_int('user_id');
-        $password = post_str('new_password');
+        $svc = new AccountService($pdo);
 
-        if ($userId <= 0)          json_err('user_id không hợp lệ.', 422);
-        if (mb_strlen($password) < 6) json_err('Mật khẩu mới phải có ít nhất 6 ký tự.', 422);
-
-        $stmt = $pdo->prepare("SELECT email FROM users WHERE user_id = :id");
-        $stmt->execute([':id' => $userId]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        if (!$user) json_err('Tài khoản không tồn tại.', 404);
-
-        $pdo->prepare("UPDATE users SET password_hash = :h WHERE user_id = :id")
-            ->execute([':h' => password_hash($password, PASSWORD_DEFAULT), ':id' => $userId]);
-
-        _audit($pdo, "Reset mật khẩu cho: {$user['email']}", 'users');
-        json_ok(null, "Đã reset mật khẩu cho {$user['email']} thành công.");
+        try {
+            $email = $svc->resetPassword(post_int('user_id'), post_str('new_password'));
+            _send_accounts_json(true, null, null, "Đã reset mật khẩu cho {$email} thành công.");
+        } catch (InvalidArgumentException | RuntimeException $e) {
+            _send_accounts_json(false, null, null, $e->getMessage());
+        }
         break;
 
 
     // ══════════════════════════════════════════════════════════════
     // case 'delete'
     // POST /api/account_api.php?action=delete
-    // Admin only — chặn nếu có phiên định giá liên quan
+    // Admin only
     // ══════════════════════════════════════════════════════════════
     case 'delete':
         require_method('POST');
         apiRequireAdmin();
 
-        $userId = post_int('user_id');
-        if ($userId <= 0) json_err('user_id không hợp lệ.', 422);
+        $svc           = new AccountService($pdo);
+        $currentUserId = (int) ($_SESSION['user']['user_id'] ?? 0);
 
-        if ($userId === (int) ($_SESSION['user']['user_id'] ?? 0)) {
-            json_err('Bạn không thể xoá tài khoản của chính mình.', 403);
+        try {
+            $email = $svc->delete(post_int('user_id'), $currentUserId);
+            _send_accounts_json(true, null, null, "Đã xoá tài khoản {$email} thành công.");
+        } catch (InvalidArgumentException | RuntimeException $e) {
+            _send_accounts_json(false, null, null, $e->getMessage());
         }
-
-        $stmt = $pdo->prepare("SELECT email, role FROM users WHERE user_id = :id");
-        $stmt->execute([':id' => $userId]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        if (!$user) json_err('Tài khoản không tồn tại.', 404);
-
-        // Kiểm tra ràng buộc: có phiên định giá không
-        $countStmt = $pdo->prepare("SELECT COUNT(*) FROM valuation_sessions WHERE user_id = :id");
-        $countStmt->execute([':id' => $userId]);
-        $count = (int) $countStmt->fetchColumn();
-        if ($count > 0) {
-            json_err(
-                "Không thể xoá: tài khoản có {$count} phiên định giá liên quan. Hãy khoá thay vì xoá.",
-                409
-            );
-        }
-
-        // Xoá các bản ghi phụ thuộc (không có FK cascade)
-        $pdo->prepare("DELETE FROM audit_logs    WHERE user_id = :id")->execute([':id' => $userId]);
-        $pdo->prepare("DELETE FROM notifications WHERE user_id = :id")->execute([':id' => $userId]);
-        $pdo->prepare("DELETE FROM users         WHERE user_id = :id")->execute([':id' => $userId]);
-
-        _audit($pdo, "Xoá tài khoản: {$user['email']} (Role: {$user['role']})", 'users');
-        json_ok(null, "Đã xoá tài khoản {$user['email']} thành công.");
         break;
 
 
@@ -371,18 +255,38 @@ switch ($action) {
     // default
     // ══════════════════════════════════════════════════════════════
     default:
-        $safe = htmlspecialchars($action, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        json_err("Action '{$safe}' không hợp lệ.", 400);
+        _send_accounts_json(false, null, null, 'Action không hợp lệ.');
 }
 
 
-// ──────────────────────────────────────────────────────────────────
-// PRIVATE HELPERS (dùng trong file này)
-// ──────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────
+// PRIVATE HELPERS
+// ──────────────────────────────────────────────────────────────
 
 /**
- * Đọc JSON body từ php://input.
- * Trả về mảng rỗng nếu không parse được.
+ * Gửi JSON theo format mà admin/accounts.php JS kỳ vọng:
+ * { success, message, users, pagination }
+ */
+function _send_accounts_json(
+    bool   $success,
+    ?array $users,
+    ?array $pagination,
+    string $message
+): never {
+    if (!headers_sent()) {
+        http_response_code($success ? 200 : 400);
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
+    }
+    $payload = ['success' => $success, 'message' => $message];
+    if ($users      !== null) $payload['users']      = $users;
+    if ($pagination !== null) $payload['pagination'] = $pagination;
+    echo json_encode($payload, JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+/**
+     * Đọc JSON body từ php://input.
  */
 function _parse_json_body(): array
 {
@@ -390,20 +294,4 @@ function _parse_json_body(): array
     if (empty($raw)) return [];
     $decoded = json_decode($raw, true);
     return is_array($decoded) ? $decoded : [];
-}
-
-/**
- * Ghi audit log — wrapper nội bộ.
- */
-function _audit(PDO $pdo, string $action, string $table): void
-{
-    try {
-        $pdo->prepare(
-            "INSERT INTO audit_logs (user_id, action, target_table) VALUES (:u, :a, :t)"
-        )->execute([
-            ':u' => $_SESSION['user']['user_id'] ?? 0,
-            ':a' => $action,
-            ':t' => $table,
-        ]);
-    } catch (Throwable) {}
 }

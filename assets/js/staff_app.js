@@ -41,21 +41,21 @@
     let currentPrice     = null;
 
     /* ----------------------------------------------------------
-     * INIT — Load Brands + Active Rules (chỉ chạy nếu có form)
+     * INIT — Load Brands + Active Rules
      * ---------------------------------------------------------- */
     async function initValuation() {
-        if (!brandSelect) return; // không phải trang định giá -> bỏ qua
+        if (!brandSelect) return;
 
-        // Load brands
         const brandRes = await Api.get('valuation_api.php', 'brands');
         if (brandRes.ok && Array.isArray(brandRes.data)) {
             brandSelect.innerHTML = '<option value="">-- Chọn hãng --</option>' +
-                brandRes.data.map(b => `<option value="${b.brand_id}">${Api.esc(b.brand_name)}</option>`).join('');
+                brandRes.data.map(b =>
+                    `<option value="${b.brand_id}">${Api.esc(b.brand_name)}</option>`
+                ).join('');
         } else {
             brandSelect.innerHTML = '<option value="">Lỗi tải dữ liệu hãng</option>';
         }
 
-        // Load active rules
         const rulesRes = await Api.get('valuation_api.php', 'rules');
         if (rulesRes.ok && Array.isArray(rulesRes.data) && rulesRes.data.length > 0) {
             rulesChecklist.innerHTML = rulesRes.data.map(r => `
@@ -74,8 +74,9 @@
     }
 
     if (brandSelect) {
+
         /* ------------------------------------------------------
-         * EVENT: Chọn hãng -> Load models
+         * EVENT: Chọn hãng → Load models
          * ------------------------------------------------------ */
         brandSelect.addEventListener('change', async function () {
             const brandId = this.value;
@@ -85,11 +86,11 @@
 
             if (!brandId) {
                 modelSelect.innerHTML = '<option value="">-- Chọn hãng trước --</option>';
-                modelSelect.disabled = true;
+                modelSelect.disabled  = true;
                 return;
             }
 
-            modelSelect.disabled = true;
+            modelSelect.disabled  = true;
             modelSelect.innerHTML = '<option value="">Đang tải...</option>';
 
             const res = await Api.get('valuation_api.php', 'models', { brand_id: brandId });
@@ -111,7 +112,7 @@
         });
 
         /* ------------------------------------------------------
-         * EVENT: Chọn model -> Hiện cấu hình
+         * EVENT: Chọn model → Hiện cấu hình
          * ------------------------------------------------------ */
         modelSelect.addEventListener('change', function () {
             const opt = this.options[this.selectedIndex];
@@ -124,8 +125,7 @@
             infoRam.value       = opt.dataset.ram + ' GB';
             infoRom.value       = opt.dataset.rom + ' GB';
             infoBasePrice.value = Api.vnd(parseInt(opt.dataset.price, 10));
-
-            btnRunAi.disabled = false;
+            btnRunAi.disabled   = false;
         });
 
         /* ------------------------------------------------------
@@ -134,7 +134,6 @@
         btnRunAi.addEventListener('click', async function () {
             const modelId       = modelSelect.value;
             const batteryHealth = batteryInput.value;
-            const scratchLevel  = scratchSelect.value;
 
             if (!modelId) {
                 alert('Vui lòng chọn dòng máy.');
@@ -145,23 +144,22 @@
                 return;
             }
 
-            // ✅ Dùng FormData để $_POST đọc được
+            // Dùng FormData để PHP đọc qua $_POST
             const fd = new FormData();
             fd.append('model_id',       parseInt(modelId, 10));
             fd.append('battery_health', parseInt(batteryHealth, 10));
-            fd.append('scratch_level',  parseInt(scratchLevel, 10));
 
             // rule_ids[] — multi-value
-            Array.from(document.querySelectorAll('.rule-checkbox:checked'))
-                .forEach(cb => fd.append('rule_ids[]', parseInt(cb.value, 10)));
+            document.querySelectorAll('.rule-checkbox:checked').forEach(cb => {
+                fd.append('rule_ids[]', parseInt(cb.value, 10));
+            });
 
-            btnRunAi.disabled = true;
-            btnRunAi.textContent = '⏳ AI đang phân tích...';
+            btnRunAi.disabled      = true;
+            btnRunAi.textContent   = '⏳ AI đang phân tích...';
 
-            // ✅ Action đúng: 'valuate'
             const res = await Api.post('valuation_api.php', 'valuate', fd);
 
-            btnRunAi.disabled = false;
+            btnRunAi.disabled    = false;
             btnRunAi.textContent = '🤖 Chạy AI Định Giá';
 
             if (!res.ok) {
@@ -177,8 +175,8 @@
 
             resultDone.classList.add('d-none');
             resultDone.textContent = '';
-            btnConfirm.disabled = false;
-            btnDecline.disabled = false;
+            btnConfirm.disabled    = false;
+            btnDecline.disabled    = false;
 
             placeholderEl.classList.add('d-none');
             resultBox.classList.remove('d-none');
@@ -205,20 +203,18 @@
                 return;
             }
 
-            // ✅ Dùng FormData để $_POST đọc được
             const fd = new FormData();
             fd.append('session_id',     currentSessionId);
             fd.append('imei',           imei);
             fd.append('customer_name',  name);
             fd.append('customer_phone', phone);
 
-            btnConfirm.disabled = true;
-            btnConfirm.textContent = '⏳ Đang xử lý...';
+            btnConfirm.disabled      = true;
+            btnConfirm.textContent   = '⏳ Đang xử lý...';
 
-            // ✅ Action đúng: 'confirm_purchase'
             const res = await Api.post('valuation_api.php', 'confirm_purchase', fd);
 
-            btnConfirm.disabled = false;
+            btnConfirm.disabled    = false;
             btnConfirm.textContent = '✅ Chốt thu mua & Nhập kho';
 
             if (!res.ok) {
@@ -260,7 +256,7 @@
     }
 
     /* ----------------------------------------------------------
-     * RESET toàn bộ form sau khi xử lý xong (valuation page)
+     * RESET form sau khi xử lý xong
      * ---------------------------------------------------------- */
     function resetDeviceInfo() {
         if (!infoRam) return;
@@ -270,7 +266,6 @@
     }
 
     function resetForm() {
-        // ✅ Guard — chỉ chạy khi đang ở trang valuation
         if (!btnConfirm) return;
 
         currentSessionId = null;
@@ -286,9 +281,9 @@
             modelSelect.disabled  = true;
         }
 
-        document.querySelectorAll('.rule-checkbox').forEach(cb => cb.checked = false);
+        document.querySelectorAll('.rule-checkbox').forEach(cb => { cb.checked = false; });
 
-        if (btnRunAi)  btnRunAi.disabled  = true;
+        if (btnRunAi)   btnRunAi.disabled   = true;
         if (btnConfirm) btnConfirm.disabled = true;
         if (btnDecline) btnDecline.disabled = true;
 
@@ -315,14 +310,14 @@
     const invSearch    = document.getElementById('inv-search');
 
     const STATUS_LABELS = {
-        'Pending':       'Chờ kiểm định',
-        'Stored':        'Đang lưu kho',
-        'Refurbishing':  'Đang tân trang',
-        'Sold':          'Đã bán',
+        'Stored':       'Đang lưu kho',
+        'Refurbishing': 'Đang tân trang',
+        'Sold':         'Đã bán',
     };
 
     /**
-     * Render select trạng thái cho 1 dòng
+     * Render select trạng thái cho 1 dòng.
+     * KEY: dùng data-imei (khớp với InventoryService.updateStatus(imei, status))
      */
     function buildStatusSelect(imei, currentStatus) {
         const options = Object.entries(STATUS_LABELS).map(([value, label]) => {
@@ -334,7 +329,8 @@
     }
 
     /**
-     * Load danh sách thiết bị trong kho
+     * Load danh sách thiết bị trong kho.
+     * Gọi: Api.get('inventory_api.php', 'list')
      */
     async function loadInventory() {
         if (!invTableBody) return;
@@ -343,7 +339,6 @@
             <tr><td colspan="8" class="text-center text-muted py-4">Đang tải dữ liệu...</td></tr>
         `;
 
-        // ✅ Đường dẫn đúng: chỉ tên file, không có ../api/
         const res = await Api.get('inventory_api.php', 'list');
 
         if (!res.ok || !Array.isArray(res.data)) {
@@ -362,15 +357,15 @@
 
         invTableBody.innerHTML = res.data.map(item => {
             const deviceName = `${Api.esc(item.brand_name || '')} ${Api.esc(item.model_name || '')}`.trim();
-            const config      = `${item.ram_gb ?? '-'}GB / ${item.rom_gb ?? '-'}GB`;
-            const battery     = (item.battery_health !== undefined && item.battery_health !== null)
+            const config     = `${item.ram_gb ?? '-'}GB / ${item.rom_gb ?? '-'}GB`;
+            const battery    = (item.battery_health !== undefined && item.battery_health !== null)
                 ? `${item.battery_health}%` : '—';
-            const price       = Api.vnd(item.price);
-            const customer    = item.customer_name
+            const price      = Api.vnd(item.price);
+            const customer   = item.customer_name
                 ? `${Api.esc(item.customer_name)}<br><small class="text-muted">${Api.esc(item.phone_number || '')}</small>`
                 : '<span class="text-muted">—</span>';
-            const receivedAt  = item.received_at || '—';
-            const imei        = item.imei || '';
+            const receivedAt = item.received_at || '—';
+            const imei       = item.imei || '';
 
             return `
                 <tr data-search="${Api.esc((imei + ' ' + deviceName).toLowerCase())}">
@@ -386,26 +381,26 @@
             `;
         }).join('');
 
-        // Gắn lại event change cho các select trạng thái
         bindStatusSelectEvents();
-
-        // Áp dụng lại filter tìm kiếm hiện tại (nếu có)
         applyInventorySearch();
     }
 
     /**
-     * Gắn sự kiện change cho .status-select
+     * Gắn sự kiện change cho .status-select.
+     * Gửi: { imei, status } — khớp với inventory_api.php case 'update_status'
      */
     function bindStatusSelectEvents() {
         document.querySelectorAll('.status-select').forEach(sel => {
+            sel.dataset.prev = sel.value;
+
             sel.addEventListener('change', async function () {
                 const imei   = this.dataset.imei;
                 const status = this.value;
-                const prev   = this.dataset.prev || '';
+                const prev   = this.dataset.prev;
 
                 this.disabled = true;
 
-                // ✅ Đường dẫn đúng: chỉ tên file, không có ../api/
+                // Api.postJson gửi JSON body → inventory_api.php đọc php://input
                 const res = await Api.postJson('inventory_api.php', 'update_status', {
                     imei:   imei,
                     status: status,
@@ -415,22 +410,14 @@
 
                 if (res.ok) {
                     this.dataset.prev = status;
-                    alert('Cập nhật thành công!');
                 } else {
-                    // Rollback
                     this.value = prev;
                     alert('Lỗi: ' + (res.msg || 'Không thể cập nhật trạng thái.'));
                 }
             });
-
-            // Lưu giá trị ban đầu
-            sel.dataset.prev = sel.value;
         });
     }
 
-    /**
-     * Tìm kiếm client-side: lọc các <tr> theo IMEI / tên máy
-     */
     function applyInventorySearch() {
         if (!invSearch) return;
         const keyword = invSearch.value.trim().toLowerCase();
@@ -460,7 +447,8 @@
     };
 
     /**
-     * Load nhật ký định giá của Staff hiện tại
+     * Load nhật ký định giá của Staff hiện tại.
+     * Gọi: Api.get('valuation_api.php', 'history')
      */
     async function loadHistory() {
         if (!historyTableBody) return;
@@ -486,7 +474,7 @@
         }
 
         historyTableBody.innerHTML = res.data.map(item => {
-            const deviceName = `${Api.esc(item.brand_name || '')} ${Api.esc(item.model_name || '')}`.trim();
+            const deviceName  = `${Api.esc(item.brand_name || '')} ${Api.esc(item.model_name || '')}`.trim();
             const config      = `${item.ram_gb ?? '-'}GB / ${item.rom_gb ?? '-'}GB`;
             const battery     = (item.battery_health !== undefined && item.battery_health !== null)
                 ? `${item.battery_health}%` : '—';
@@ -497,10 +485,10 @@
             const rules       = item.applied_rules
                 ? Api.esc(item.applied_rules)
                 : '<span class="text-muted">—</span>';
-            const statusBadge = SESSION_STATUS_LABELS[item.final_status] || Api.esc(item.final_status || '—');
+            const statusBadge = SESSION_STATUS_LABELS[item.final_status]
+                || Api.esc(item.final_status || '—');
             const createdAt   = item.created_at || '—';
-
-            const searchText = `${(item.created_at || '')} ${deviceName}`.toLowerCase();
+            const searchText  = `${createdAt} ${deviceName}`.toLowerCase();
 
             return `
                 <tr data-search="${Api.esc(searchText)}">
@@ -516,13 +504,9 @@
             `;
         }).join('');
 
-        // Áp dụng lại filter tìm kiếm hiện tại (nếu có)
         applyHistorySearch();
     }
 
-    /**
-     * Tìm kiếm client-side: lọc các <tr> theo tên máy hoặc ngày tháng
-     */
     function applyHistorySearch() {
         if (!historySearch) return;
         const keyword = historySearch.value.trim().toLowerCase();
@@ -534,7 +518,7 @@
     }
 
     if (historySearch) {
-        historySearch.addEventListener('keyup', applyHistorySearch);
+        historySearch.addEventListener('input', applyHistorySearch);
     }
 
 
@@ -545,4 +529,4 @@
     loadInventory();
     loadHistory();
 
-})();
+}());

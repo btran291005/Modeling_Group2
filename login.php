@@ -28,8 +28,9 @@ if (isLoggedIn()) {
 
             <form id="login-form">
                 <div class="mb-3">
-                    <label class="form-label">Username (Email)</label>
-                    <input type="text" id="username" name="username" class="form-control" required autocomplete="username">
+                    <label class="form-label">Email</label>
+                    <!-- Sửa: id="email" (không phải username) để khớp với api/account_api.php đọc body['email'] -->
+                    <input type="email" id="email" name="email" class="form-control" required autocomplete="email">
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Password</label>
@@ -49,28 +50,30 @@ if (isLoggedIn()) {
         errorBox.classList.add('d-none');
         errorBox.textContent = '';
 
-        const username = document.getElementById('username').value.trim();
+        // Sửa: đọc field email (không phải username)
+        const email    = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value.trim();
 
-        if (!username || !password) {
-            errorBox.textContent = 'Vui lòng nhập đầy đủ Username và Password.';
+        if (!email || !password) {
+            errorBox.textContent = 'Vui lòng nhập đầy đủ Email và Password.';
             errorBox.classList.remove('d-none');
             return;
         }
 
-        btn.disabled = true;
+        btn.disabled    = true;
         btn.textContent = 'Đang xử lý...';
 
         try {
+            // Gửi JSON body với key "email" — khớp với account_api.php case 'login'
             const res = await fetch('api/account_api.php?action=login', {
-                method: 'POST',
+                method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
+                body:    JSON.stringify({ email, password })
             });
             const data = await res.json();
 
             if (data.ok) {
-                window.location.href = 'index.php';
+                window.location.href = data.data.redirect || 'index.php';
             } else {
                 errorBox.textContent = data.msg || 'Đăng nhập thất bại.';
                 errorBox.classList.remove('d-none');
@@ -79,7 +82,7 @@ if (isLoggedIn()) {
             errorBox.textContent = 'Không thể kết nối server. Vui lòng thử lại.';
             errorBox.classList.remove('d-none');
         } finally {
-            btn.disabled = false;
+            btn.disabled    = false;
             btn.textContent = 'Đăng nhập';
         }
     });
