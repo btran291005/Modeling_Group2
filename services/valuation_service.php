@@ -98,7 +98,7 @@ class ValuationService
      *   4. Gọi getAISuggestedPrice() từ config/ai_module.php.
      *   5. Transaction:
      *        a. INSERT valuation_sessions   → lấy session_id.
-     *        b. INSERT valuation_rule_log   → mỗi rule 1 dòng (nếu có).
+     *        b. INSERT session_rule_details → mỗi rule 1 dòng (nếu có).
      *        c. COMMIT.
      *   6. Trả về mảng kết quả cho API layer.
      *
@@ -177,9 +177,8 @@ class ValuationService
             'ram_gb'         => (int)   $model['ram_gb'],
             'rom_gb'         => (int)   $model['rom_gb'],
             'battery_health' => $batteryHealth,
-            'rules'          => $validRules,   // array of {condition_name, deduction_percent}
         ];
-        $aiResult = getAISuggestedPrice($aiInput);
+        $aiResult = getAISuggestedPrice($aiInput, $validRules);
         // Đảm bảo giá không âm
         $finalPrice = max(0.0, (float) $aiResult['price']);
 
@@ -189,30 +188,28 @@ class ValuationService
             // 5a. INSERT valuation_sessions
             $stmtSession = $this->pdo->prepare(
                 "INSERT INTO valuation_sessions
-                    (staff_id, model_id, battery_health, suggested_price, reasoning, status, created_at)
+                    (user_id, model_id, battery_health, ai_suggested_price, final_status, created_at)
                  VALUES
-                    (:staff_id, :model_id, :battery, :price, :reasoning, 'pending', NOW())"
+                    (:user_id, :model_id, :battery, :price, 'Pending', NOW())"
             );
             $stmtSession->execute([
-                ':staff_id'  => $staffId,
-                ':model_id'  => $modelId,
-                ':battery'   => $batteryHealth,
-                ':price'     => $finalPrice,
-                ':reasoning' => $aiResult['reasoning'] ?? '',
+                ':user_id'  => $staffId,
+                ':model_id' => $modelId,
+                ':battery'  => $batteryHealth,
+                ':price'    => $finalPrice,
             ]);
             $sessionId = (int) $this->pdo->lastInsertId();
 
-            // 5b. INSERT valuation_rule_log (nếu có rule được chọn)
+            // 5b. INSERT session_rule_details (nếu có rule được chọn)
             if (!empty($validRules)) {
                 $stmtLog = $this->pdo->prepare(
-                    "INSERT INTO valuation_rule_log (session_id, rule_id, deduction_percent)
-                     VALUES (:session_id, :rule_id, :deduction)"
+                    "INSERT INTO session_rule_details (session_id, rule_id)
+                     VALUES (:session_id, :rule_id)"
                 );
                 foreach ($validRules as $rule) {
                     $stmtLog->execute([
                         ':session_id' => $sessionId,
                         ':rule_id'    => $rule['rule_id'],
-                        ':deduction'  => $rule['deduction_percent'],
                     ]);
                 }
             }
@@ -247,14 +244,13 @@ class ValuationService
      * Xác nhận thu mua thiết bị và nhập kho.
      *
      * Luồng xử lý:
-     *   1. Validate input (session tồn tại, thuộc Staff này, đang 'pending').
+     *   1. Validate input (session tồn tại, thuộc Staff này, đang 'Pending').
      *   2. Validate IMEI chưa tồn tại trong kho.
      *   3. UPSERT customer (tìm theo phone → dùng lại, không có → INSERT mới).
      *   4. Transaction:
-     *        a. UPDATE valuation_sessions SET status='confirmed'.
-     *        b. INSERT inventory_items (thiết bị vào kho).
-     *        c. INSERT purchase_records (giao dịch thu mua).
-     *        d. COMMIT.
+     *        a. UPDATE valuation_sessions SET final_status='Purchased', customer_id=...
+     *        b. INSERT gadgets (thiết bị vào kho).
+     *        c. COMMIT.
      *   5. Trả về thông tin xác nhận.
      *
      * @param  int    $staffId       $_SESSION['user_id']
@@ -263,7 +259,7 @@ class ValuationService
      * @param  string $customerName  Tên khách bán
      * @param  string $customerPhone Số điện thoại khách
      *
-     * @return array{session_id:int, imei:string, customer_id:int, purchase_id:int, inventory_id:int}
+     * @return array{session_id:int, imei:string, customer_id:int, inventory_id:string}
      * @throws InvalidArgumentException Nếu dữ liệu đầu vào không hợp lệ
      * @throws RuntimeException         Nếu session không hợp lệ, IMEI trùng, hoặc lỗi DB
      */
@@ -281,10 +277,10 @@ class ValuationService
 
         $stmtSess = $this->pdo->prepare(
             "SELECT vs.session_id,
-                    vs.staff_id,
+                    vs.user_id,
                     vs.model_id,
-                    vs.suggested_price,
-                    vs.status
+                    vs.ai_suggested_price,
+                    vs.final_status
              FROM   valuation_sessions vs
              WHERE  vs.session_id = :sid"
         );
@@ -294,18 +290,18 @@ class ValuationService
         if (!$session) {
             throw new RuntimeException('Phiên định giá không tồn tại.');
         }
-        if ((int) $session['staff_id'] !== $staffId) {
+        if ((int) $session['user_id'] !== $staffId) {
             throw new RuntimeException('Bạn không có quyền xác nhận phiên định giá này.');
         }
-        if ($session['status'] !== 'pending') {
+        if ($session['final_status'] !== 'Pending') {
             throw new RuntimeException(
-                "Phiên định giá đã ở trạng thái '{$session['status']}', không thể xác nhận lại."
+                "Phiên định giá đã ở trạng thái '{$session['final_status']}', không thể xác nhận lại."
             );
         }
 
         // ── 2. Kiểm tra IMEI chưa tồn tại trong kho ─────────
         $stmtImei = $this->pdo->prepare(
-            "SELECT inventory_id FROM inventory_items WHERE imei = :imei LIMIT 1"
+            "SELECT imei FROM gadgets WHERE imei = :imei LIMIT 1"
         );
         $stmtImei->execute([':imei' => $imei]);
         if ($stmtImei->fetch()) {
@@ -315,7 +311,7 @@ class ValuationService
         // ── 3. UPSERT Customer ────────────────────────────────
         // Tìm theo phone trước; nếu có → tái sử dụng customer_id
         $stmtFindCust = $this->pdo->prepare(
-            "SELECT customer_id FROM customers WHERE phone = :phone LIMIT 1"
+            "SELECT customer_id FROM customers WHERE phone_number = :phone LIMIT 1"
         );
         $stmtFindCust->execute([':phone' => $customerPhone]);
         $existingCustomer = $stmtFindCust->fetch(PDO::FETCH_ASSOC);
@@ -324,7 +320,7 @@ class ValuationService
             $customerId = (int) $existingCustomer['customer_id'];
         } else {
             $stmtInsertCust = $this->pdo->prepare(
-                "INSERT INTO customers (full_name, phone, created_at)
+                "INSERT INTO customers (full_name, phone_number, created_at)
                  VALUES (:name, :phone, NOW())"
             );
             $stmtInsertCust->execute([
@@ -337,43 +333,26 @@ class ValuationService
         // ── 4. Transaction: Ghi nhận & Nhập kho ──────────────
         $this->pdo->beginTransaction();
         try {
-            // 4a. Cập nhật trạng thái session
+            // 4a. Cập nhật trạng thái session + gắn customer
             $stmtUpdateSess = $this->pdo->prepare(
                 "UPDATE valuation_sessions
-                 SET    status = 'confirmed', confirmed_at = NOW()
+                 SET    final_status = 'Purchased', customer_id = :cid
                  WHERE  session_id = :sid"
             );
-            $stmtUpdateSess->execute([':sid' => $sessionId]);
+            $stmtUpdateSess->execute([
+                ':cid' => $customerId,
+                ':sid' => $sessionId,
+            ]);
 
             // 4b. Nhập thiết bị vào kho
-            $stmtInventory = $this->pdo->prepare(
-                "INSERT INTO inventory_items
-                    (model_id, imei, purchase_price, status, received_at)
-                 VALUES
-                    (:model_id, :imei, :price, 'in_stock', NOW())"
+            $stmtGadget = $this->pdo->prepare(
+                "INSERT INTO gadgets (imei, session_id, status, created_at)
+                 VALUES (:imei, :session_id, 'Stored', NOW())"
             );
-            $stmtInventory->execute([
-                ':model_id' => $session['model_id'],
-                ':imei'     => $imei,
-                ':price'    => $session['suggested_price'],
+            $stmtGadget->execute([
+                ':imei'       => $imei,
+                ':session_id' => $sessionId,
             ]);
-            $inventoryId = (int) $this->pdo->lastInsertId();
-
-            // 4c. Lưu giao dịch thu mua
-            $stmtPurchase = $this->pdo->prepare(
-                "INSERT INTO purchase_records
-                    (session_id, inventory_id, customer_id, staff_id, amount, purchased_at)
-                 VALUES
-                    (:session_id, :inventory_id, :customer_id, :staff_id, :amount, NOW())"
-            );
-            $stmtPurchase->execute([
-                ':session_id'   => $sessionId,
-                ':inventory_id' => $inventoryId,
-                ':customer_id'  => $customerId,
-                ':staff_id'     => $staffId,
-                ':amount'       => $session['suggested_price'],
-            ]);
-            $purchaseId = (int) $this->pdo->lastInsertId();
 
             $this->pdo->commit();
 
@@ -386,8 +365,7 @@ class ValuationService
             'session_id'   => $sessionId,
             'imei'         => $imei,
             'customer_id'  => $customerId,
-            'purchase_id'  => $purchaseId,
-            'inventory_id' => $inventoryId,
+            'inventory_id' => $imei,
         ];
     }
 
@@ -398,7 +376,7 @@ class ValuationService
 
     /**
      * Ghi nhận khách từ chối đề giá.
-     * Chỉ cho phép decline phiên đang 'pending' và thuộc Staff này.
+     * Chỉ cho phép decline phiên đang 'Pending' và thuộc Staff này.
      *
      * @return array{session_id:int, new_status:string}
      * @throws InvalidArgumentException | RuntimeException
@@ -411,7 +389,7 @@ class ValuationService
 
         // Kiểm tra quyền & trạng thái
         $stmt = $this->pdo->prepare(
-            "SELECT session_id, staff_id, status
+            "SELECT session_id, user_id, final_status
              FROM   valuation_sessions
              WHERE  session_id = :sid"
         );
@@ -421,40 +399,39 @@ class ValuationService
         if (!$session) {
             throw new RuntimeException('Phiên định giá không tồn tại.');
         }
-        if ((int) $session['staff_id'] !== $staffId) {
+        if ((int) $session['user_id'] !== $staffId) {
             throw new RuntimeException('Bạn không có quyền thực hiện thao tác này.');
         }
-        if ($session['status'] !== 'pending') {
+        if ($session['final_status'] !== 'Pending') {
             throw new RuntimeException(
-                "Phiên đã ở trạng thái '{$session['status']}', không thể từ chối."
+                "Phiên đã ở trạng thái '{$session['final_status']}', không thể từ chối."
             );
         }
 
         $stmtUpdate = $this->pdo->prepare(
             "UPDATE valuation_sessions
-             SET    status = 'declined', declined_at = NOW()
+             SET    final_status = 'Declined'
              WHERE  session_id = :sid"
         );
         $stmtUpdate->execute([':sid' => $sessionId]);
 
         return [
             'session_id' => $sessionId,
-            'new_status' => 'declined',
+            'new_status' => 'Declined',
         ];
     }
 
 
     // ═══════════════════════════════════════════════════════════
-    // NHÓM 5: LỊCH SỬ
+    // NHÓM 5: LỊCH SỬ (CŨ — phân trang, dùng cho staff/history.php cũ nếu có)
     // ═══════════════════════════════════════════════════════════
 
     /**
-     * Lịch sử định giá của Staff (UC14).
-     * Có phân trang và lọc theo status, từ khoá.
+     * Lịch sử định giá của Staff — có phân trang và lọc theo status, từ khoá.
      *
-     * @param  string $status  '' = tất cả | 'pending'|'confirmed'|'declined'
+     * @param  string $status  '' = tất cả | 'Pending'|'Purchased'|'Declined'
      * @param  string $search  Tìm theo tên model hoặc IMEI
-     * @return array{sessions: array, total: int, stats: array}
+     * @return array{sessions: array, total: int, page: int, per_page: int, stats: array}
      */
     public function getHistory(
         int    $staffId,
@@ -468,25 +445,26 @@ class ValuationService
         $offset  = ($page - 1) * $perPage;
 
         // ── Build WHERE động ─────────────────────────────────
-        $where  = ['vs.staff_id = :staff_id'];
-        $params = [':staff_id' => $staffId];
+        $where  = ['vs.user_id = :uid'];
+        $params = [':uid' => $staffId];
 
-        if ($status !== '') {
-            $where[]          = 'vs.status = :status';
+        if ($status !== '' && in_array($status, ['Pending', 'Purchased', 'Declined'], true)) {
+            $where[]           = 'vs.final_status = :status';
             $params[':status'] = $status;
         }
         if ($search !== '') {
-            $where[]           = '(dm.model_name LIKE :q OR ii.imei LIKE :q)';
-            $params[':q']      = "%{$search}%";
+            $where[]      = '(dm.model_name LIKE :q OR g.imei LIKE :q)';
+            $params[':q'] = "%{$search}%";
         }
 
         $whereClause = 'WHERE ' . implode(' AND ', $where);
 
         // ── COUNT tổng ───────────────────────────────────────
         $stmtCount = $this->pdo->prepare(
-            "SELECT COUNT(*) FROM valuation_sessions vs
+            "SELECT COUNT(DISTINCT vs.session_id)
+             FROM   valuation_sessions vs
              LEFT JOIN device_models dm ON dm.model_id = vs.model_id
-             LEFT JOIN inventory_items ii ON ii.imei IS NOT NULL AND vs.status = 'confirmed'
+             LEFT JOIN gadgets g        ON g.session_id = vs.session_id
              {$whereClause}"
         );
         $stmtCount->execute($params);
@@ -495,27 +473,21 @@ class ValuationService
         // ── Lấy danh sách phân trang ─────────────────────────
         $stmtList = $this->pdo->prepare(
             "SELECT vs.session_id,
-                    vs.status,
-                    vs.suggested_price,
+                    vs.final_status,
+                    vs.ai_suggested_price,
                     vs.battery_health,
                     vs.created_at,
-                    vs.confirmed_at,
-                    vs.declined_at,
                     dm.model_name,
                     b.brand_name,
-                    ii.imei
+                    g.imei
              FROM   valuation_sessions vs
-             LEFT JOIN device_models   dm ON dm.model_id   = vs.model_id
-             LEFT JOIN brands          b  ON b.brand_id    = dm.brand_id
-             LEFT JOIN inventory_items ii ON ii.inventory_id = (
-                 SELECT pr.inventory_id FROM purchase_records pr
-                 WHERE  pr.session_id = vs.session_id LIMIT 1
-             )
+             LEFT JOIN device_models   dm ON dm.model_id = vs.model_id
+             LEFT JOIN brands          b  ON b.brand_id  = dm.brand_id
+             LEFT JOIN gadgets         g  ON g.session_id = vs.session_id
              {$whereClause}
              ORDER BY vs.created_at DESC
              LIMIT  :limit OFFSET :offset"
         );
-        // bindValue vì LIMIT/OFFSET không hỗ trợ named param kiểu string
         foreach ($params as $key => $value) {
             $stmtList->bindValue($key, $value);
         }
@@ -527,17 +499,17 @@ class ValuationService
         // ── Thống kê nhanh cho Staff ─────────────────────────
         $stmtStats = $this->pdo->prepare(
             "SELECT
-                COUNT(*)                                        AS total,
-                SUM(status = 'confirmed')                       AS confirmed,
-                SUM(status = 'declined')                        AS declined,
-                SUM(status = 'pending')                         AS pending,
+                COUNT(*)                                              AS total,
+                SUM(final_status = 'Purchased')                       AS purchased,
+                SUM(final_status = 'Declined')                        AS declined,
+                SUM(final_status = 'Pending')                         AS pending,
                 COALESCE(SUM(
-                    CASE WHEN status='confirmed' THEN suggested_price ELSE 0 END
-                ), 0)                                           AS total_spent
+                    CASE WHEN final_status='Purchased' THEN ai_suggested_price ELSE 0 END
+                ), 0)                                                 AS total_spent
              FROM valuation_sessions
-             WHERE staff_id = :staff_id"
+             WHERE user_id = :uid"
         );
-        $stmtStats->execute([':staff_id' => $staffId]);
+        $stmtStats->execute([':uid' => $staffId]);
         $stats = $stmtStats->fetch(PDO::FETCH_ASSOC);
 
         return [
@@ -553,7 +525,7 @@ class ValuationService
      * Nhật ký định giá toàn hệ thống (Admin only).
      * Có phân trang và nhiều bộ lọc hơn getHistory().
      *
-     * @return array{sessions: array, total: int, stats: array}
+     * @return array{sessions: array, total: int, page: int, per_page: int, stats: array}
      */
     public function getAllSessions(
         int    $page      = 1,
@@ -571,17 +543,17 @@ class ValuationService
         $where  = ['1 = 1'];
         $params = [];
 
-        if ($status !== '') {
-            $where[]           = 'vs.status = :status';
+        if ($status !== '' && in_array($status, ['Pending', 'Purchased', 'Declined'], true)) {
+            $where[]           = 'vs.final_status = :status';
             $params[':status'] = $status;
         }
         if ($staffId > 0) {
-            $where[]              = 'vs.staff_id = :staff_id';
-            $params[':staff_id']  = $staffId;
+            $where[]             = 'vs.user_id = :staff_id';
+            $params[':staff_id'] = $staffId;
         }
         if ($search !== '') {
-            $where[]         = '(dm.model_name LIKE :q OR u.full_name LIKE :q OR ii.imei LIKE :q)';
-            $params[':q']    = "%{$search}%";
+            $where[]      = '(dm.model_name LIKE :q OR u.full_name LIKE :q OR g.imei LIKE :q)';
+            $params[':q'] = "%{$search}%";
         }
         if ($dateFrom !== '') {
             $where[]              = 'DATE(vs.created_at) >= :date_from';
@@ -596,14 +568,11 @@ class ValuationService
 
         // COUNT
         $stmtCount = $this->pdo->prepare(
-            "SELECT COUNT(*)
+            "SELECT COUNT(DISTINCT vs.session_id)
              FROM   valuation_sessions vs
              LEFT JOIN device_models   dm ON dm.model_id = vs.model_id
-             LEFT JOIN users           u  ON u.user_id   = vs.staff_id
-             LEFT JOIN inventory_items ii ON ii.inventory_id = (
-                 SELECT pr.inventory_id FROM purchase_records pr
-                 WHERE pr.session_id = vs.session_id LIMIT 1
-             )
+             LEFT JOIN users           u  ON u.user_id   = vs.user_id
+             LEFT JOIN gadgets         g  ON g.session_id = vs.session_id
              {$whereClause}"
         );
         $stmtCount->execute($params);
@@ -612,24 +581,19 @@ class ValuationService
         // LIST
         $stmtList = $this->pdo->prepare(
             "SELECT vs.session_id,
-                    vs.status,
-                    vs.suggested_price,
+                    vs.final_status,
+                    vs.ai_suggested_price,
                     vs.battery_health,
                     vs.created_at,
-                    vs.confirmed_at,
-                    vs.declined_at,
                     dm.model_name,
                     b.brand_name,
                     u.full_name  AS staff_name,
-                    ii.imei
+                    g.imei
              FROM   valuation_sessions vs
              LEFT JOIN device_models   dm ON dm.model_id   = vs.model_id
              LEFT JOIN brands          b  ON b.brand_id    = dm.brand_id
-             LEFT JOIN users           u  ON u.user_id     = vs.staff_id
-             LEFT JOIN inventory_items ii ON ii.inventory_id = (
-                 SELECT pr.inventory_id FROM purchase_records pr
-                 WHERE  pr.session_id = vs.session_id LIMIT 1
-             )
+             LEFT JOIN users           u  ON u.user_id     = vs.user_id
+             LEFT JOIN gadgets         g  ON g.session_id  = vs.session_id
              {$whereClause}
              ORDER  BY vs.created_at DESC
              LIMIT  :limit OFFSET :offset"
@@ -646,13 +610,13 @@ class ValuationService
         $stats = $this->pdo
             ->query(
                 "SELECT
-                    COUNT(*)                                        AS total,
-                    SUM(status = 'confirmed')                       AS confirmed,
-                    SUM(status = 'declined')                        AS declined,
-                    SUM(status = 'pending')                         AS pending,
+                    COUNT(*)                                              AS total,
+                    SUM(final_status = 'Purchased')                       AS purchased,
+                    SUM(final_status = 'Declined')                        AS declined,
+                    SUM(final_status = 'Pending')                         AS pending,
                     COALESCE(SUM(
-                        CASE WHEN status='confirmed' THEN suggested_price ELSE 0 END
-                    ), 0)                                           AS total_spent
+                        CASE WHEN final_status='Purchased' THEN ai_suggested_price ELSE 0 END
+                    ), 0)                                                 AS total_spent
                  FROM valuation_sessions"
             )
             ->fetch(PDO::FETCH_ASSOC);
@@ -664,5 +628,59 @@ class ValuationService
             'per_page' => $perPage,
             'stats'    => $stats,
         ];
+    }
+
+
+    // ═══════════════════════════════════════════════════════════
+    // NHÓM 6: NHẬT KÝ ĐỊNH GIÁ CÁ NHÂN — getStaffHistory()
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * Lấy danh sách nhật ký định giá của 1 Staff cụ thể (KHÔNG phân trang).
+     * Kèm thông tin Hãng, Dòng máy, Cấu hình, Pin, Giá AI đề xuất,
+     * Giá chốt mua (nếu đã thu mua), trạng thái phiên, các quy tắc
+     * khấu trừ đã áp dụng (đại diện cho mức trầy xước/ngoại hình).
+     *
+     * Sắp xếp theo created_at giảm dần (mới nhất lên đầu).
+     *
+     * @param  int $staffId  user_id của Staff đang đăng nhập
+     * @return array<int, array<string, mixed>>
+     */
+    public function getStaffHistory(int $staffId): array
+    {
+        $sql = "
+            SELECT
+                vs.session_id,
+                vs.created_at,
+                vs.battery_health,
+                vs.ai_suggested_price,
+                vs.final_status,
+                dm.model_name,
+                dm.ram_gb,
+                dm.rom_gb,
+                b.brand_name,
+                g.imei,
+                CASE
+                    WHEN vs.final_status = 'Purchased' THEN vs.ai_suggested_price
+                    ELSE NULL
+                END AS final_price,
+                (
+                    SELECT GROUP_CONCAT(apr.condition_name SEPARATOR ', ')
+                    FROM session_rule_details srd
+                    JOIN ai_pricing_rules apr ON srd.rule_id = apr.rule_id
+                    WHERE srd.session_id = vs.session_id
+                ) AS applied_rules
+            FROM valuation_sessions vs
+            JOIN device_models dm ON vs.model_id   = dm.model_id
+            JOIN brands        b  ON dm.brand_id   = b.brand_id
+            LEFT JOIN gadgets  g  ON g.session_id  = vs.session_id
+            WHERE vs.user_id = :staff_id
+            ORDER BY vs.created_at DESC
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':staff_id' => $staffId]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

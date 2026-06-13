@@ -120,7 +120,7 @@ switch ($action) {
     // POST /api/valuation_api.php?action=confirm_purchase
     // Quyền  : Staff
     // Body   : session_id, imei, customer_name, customer_phone
-    // Trả về : { session_id, imei, customer_id, purchase_id, inventory_id }
+    // Trả về : { session_id, imei, customer_id, inventory_id }
     // ══════════════════════════════════════════════════════════
     case 'confirm_purchase':
         require_method('POST');
@@ -197,32 +197,23 @@ switch ($action) {
     // ══════════════════════════════════════════════════════════
     // case 'history'
     // GET /api/valuation_api.php?action=history
-    //     &page=1&per_page=15&status=confirmed&q=iphone
-    // Quyền  : Staff (chỉ xem lịch sử của chính mình)
-    // Trả về : { sessions, total, page, per_page, stats }
+    // Quyền  : Staff (chỉ xem nhật ký định giá của chính mình)
+    // Trả về : [{session_id, created_at, battery_health,
+    //            ai_suggested_price, final_status, model_name,
+    //            ram_gb, rom_gb, brand_name, imei, final_price,
+    //            applied_rules}, ...]
     // ══════════════════════════════════════════════════════════
     case 'history':
         require_role('Staff');
 
-        $page    = max(1, (int) ($_GET['page']     ?? 1));
-        $perPage = max(1, (int) ($_GET['per_page'] ?? 15));
-        $status  = trim($_GET['status'] ?? '');
-        $search  = trim($_GET['q']      ?? '');
+        $staffId = (int) ($_SESSION['user']['id'] ?? $_SESSION['user_id'] ?? 0);
 
-        // Chỉ cho phép các giá trị status hợp lệ
-        $allowedStatus = ['', 'pending', 'confirmed', 'declined'];
-        if (!in_array($status, $allowedStatus, true)) {
-            json_err("status '{$status}' không hợp lệ.");
+        if ($staffId <= 0) {
+            json_err('Không xác định được tài khoản đang đăng nhập.', 401);
         }
 
-        $result = $svc->getHistory(
-            (int) $_SESSION['user_id'],
-            $page,
-            $perPage,
-            $status,
-            $search
-        );
-        json_ok($result);
+        $data = $svc->getStaffHistory($staffId);
+        json_ok($data);
 
 
     // ══════════════════════════════════════════════════════════

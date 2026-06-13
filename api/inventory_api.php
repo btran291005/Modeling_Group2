@@ -11,7 +11,7 @@ require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/_helpers.php';
 require_once __DIR__ . '/../services/InventoryService.php';
 
-requireLogin(); // Staff + Admin đều xem được (R03: Staff chỉ đổi status, không xóa)
+requireLogin(); // Staff + Admin đều xem được (Staff chỉ đổi status, không xóa)
 
 $svc    = new InventoryService($pdo);
 $action = get_action();
@@ -22,7 +22,7 @@ switch ($action) {
     // case 'list'
     // GET /api/inventory_api.php?action=list
     // Quyền  : Đã đăng nhập
-    // Trả về : [{imei, gadget_status, model_name, brand_name, ...}, ...]
+    // Trả về : [{id, imei, status, model_name, brand_name, ...}, ...]
     // ══════════════════════════════════════════════════════════
     case 'list':
         $items = $svc->getStaffInventory();
@@ -32,7 +32,7 @@ switch ($action) {
     // ══════════════════════════════════════════════════════════
     // case 'update_status'
     // POST /api/inventory_api.php?action=update_status
-    // Body   : { "id": "<imei>", "status": "Stored" }
+    // Body   : { "id": <int>, "status": "Stored" }
     // Quyền  : Đã đăng nhập (Staff được đổi trạng thái, không xóa)
     // Trả về : { success info }
     // ══════════════════════════════════════════════════════════
@@ -40,11 +40,11 @@ switch ($action) {
         require_method('POST');
 
         $body   = json_decode(file_get_contents('php://input'), true) ?? [];
-        $imei   = trim((string) ($body['id']     ?? ''));
+        $id     = (int) ($body['id']     ?? 0);
         $status = trim((string) ($body['status'] ?? ''));
 
-        if ($imei === '') {
-            json_err('Thiếu IMEI thiết bị.');
+        if ($id <= 0) {
+            json_err('Thiếu hoặc sai ID thiết bị.');
         }
 
         $allowedStatuses = ['Pending', 'Stored', 'Refurbishing', 'Sold'];
@@ -52,13 +52,13 @@ switch ($action) {
             json_err('Trạng thái không hợp lệ.');
         }
 
-        $ok = $svc->updateStatus($imei, $status);
+        $ok = $svc->updateStatus($id, $status);
 
         if (!$ok) {
-            json_err('Không thể cập nhật trạng thái. Vui lòng kiểm tra lại IMEI.', 404);
+            json_err('Không thể cập nhật trạng thái. Vui lòng kiểm tra lại ID.', 404);
         }
 
-        json_ok(['imei' => $imei, 'status' => $status], 'Cập nhật trạng thái thành công.');
+        json_ok(['id' => $id, 'status' => $status], 'Cập nhật trạng thái thành công.');
 
 
     // ══════════════════════════════════════════════════════════
