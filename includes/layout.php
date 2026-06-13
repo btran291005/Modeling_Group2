@@ -12,7 +12,7 @@ declare(strict_types=1);
  */
 function renderHeader(string $title): void
 {
-    $role     = $_SESSION['role']      ?? '';
+    $role     = $_SESSION['user']['role']      ?? '';
     $fullName = $_SESSION['full_name'] ?? '';
     $roleLower = strtolower($role);
     ?>
