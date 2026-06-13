@@ -16,7 +16,10 @@
  */
 
 // ── API Key đọc từ môi trường, KHÔNG hardcode trong source ──────
-$_geminiApiKey = $_ENV['GEMINI_API_KEY'] ?? getenv('GEMINI_API_KEY') ?? '';
+$_envFile = __DIR__ . '/.env.php';
+$_envSecrets = require $_envFile;
+define('GEMINI_API_KEY', $_envSecrets['GEMINI_API_KEY'] ?? '');
+
 
 if (!defined('GEMINI_API_KEY')) {
     define('GEMINI_API_KEY', $_geminiApiKey);

@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * Business logic cho toàn bộ nghiệp vụ quản lý tài khoản.
  * Nguyên tắc: Chỉ nhận input → query DB → trả Array hoặc ném Exception.
- * KHÔNG echo, KHÔNG header(), KHÔNG $_SESSION.
+ * KHÔNG echo, KHÔNG header(), KHÔNG $_SESSION (trừ đọc user_id để audit).
  */
 class AccountService
 {
@@ -79,6 +79,25 @@ class AccountService
                 'total_pages'  => $totalPages,
             ],
         ];
+    }
+
+
+    // ═══════════════════════════════════════════════════════════
+    // getAllAccounts — Lấy toàn bộ danh sách user (không phân trang)
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * @return array<int, array{user_id:int, full_name:string, email:string, role:string, status:string, created_at:string}>
+     */
+    public function getAllAccounts(): array
+    {
+        return $this->pdo
+            ->query(
+                "SELECT user_id, full_name, email, role, status, created_at
+                 FROM   users
+                 ORDER  BY created_at DESC"
+            )
+            ->fetchAll(PDO::FETCH_ASSOC);
     }
 
 
@@ -173,7 +192,7 @@ class AccountService
 
 
     // ═══════════════════════════════════════════════════════════
-    // toggleStatus — Khoá / mở khoá tài khoản
+    // toggleStatus — Khoá / mở khoá tài khoản (đảo trạng thái hiện tại)
     // ═══════════════════════════════════════════════════════════
 
     /**
@@ -210,6 +229,50 @@ class AccountService
         $this->_audit("{$verb} tài khoản: {$user['email']}", 'users');
 
         return ['new_status' => $newStatus, 'email' => $user['email']];
+    }
+
+
+    // ═══════════════════════════════════════════════════════════
+    // updateAccountStatus — Set trạng thái tài khoản theo giá trị chỉ định
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * @param  int    $userId
+     * @param  string $status  'Active' | 'Locked'
+     * @return bool
+     * @throws InvalidArgumentException
+     * @throws RuntimeException  Không tồn tại / tự khoá chính mình
+     */
+    public function updateAccountStatus(int $userId, string $status, int $currentUserId = 0): bool
+    {
+        if ($userId <= 0) {
+            throw new InvalidArgumentException('user_id không hợp lệ.');
+        }
+        if (!in_array($status, ['Active', 'Locked'], true)) {
+            throw new InvalidArgumentException('Trạng thái không hợp lệ. Chỉ nhận "Active" hoặc "Locked".');
+        }
+        if ($status === 'Locked' && $userId === $currentUserId) {
+            throw new RuntimeException('Bạn không thể khoá tài khoản của chính mình.');
+        }
+
+        $stmt = $this->pdo->prepare("SELECT email FROM users WHERE user_id = :id");
+        $stmt->execute([':id' => $userId]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user) {
+            throw new RuntimeException('Tài khoản không tồn tại.');
+        }
+
+        $ok = $this->pdo->prepare(
+            "UPDATE users SET status = :s WHERE user_id = :id"
+        )->execute([':s' => $status, ':id' => $userId]);
+
+        if ($ok) {
+            $verb = $status === 'Locked' ? 'Khoá' : 'Mở khoá';
+            $this->_audit("{$verb} tài khoản: {$user['email']}", 'users');
+        }
+
+        return (bool) $ok;
     }
 
 

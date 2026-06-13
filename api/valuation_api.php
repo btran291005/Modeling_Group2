@@ -16,7 +16,7 @@ require_once __DIR__ . '/../config/constants.php';
 require_once __DIR__ . '/../config/ai_module.php';
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../api/helpers.php';
-require_once __DIR__ . '/../services/ValuationService.php';
+require_once __DIR__ . '/../services/valuation_service.php';
 
 // ── Khởi tạo Service ──────────────────────────────────────────
 $svc = new ValuationService($pdo);
