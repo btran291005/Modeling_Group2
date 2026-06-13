@@ -1,137 +1,181 @@
 <?php
+
 /**
  * includes/auth.php
- * Quản lý Session và phân quyền truy cập
- * Được include ở ĐẦU mọi file PHP cần bảo vệ
+ *
+ * Guard functions cho toàn hệ thống.
+ * Include ở ĐẦU mọi file cần bảo vệ, sau session_start().
+ *
+ * Cấu trúc $_SESSION['user']:
+ *   [
+ *     'user_id'   => int,
+ *     'full_name' => string,
+ *     'email'     => string,
+ *     'role'      => 'Admin' | 'Staff',
+ *   ]
  */
 
-// Khởi động session nếu chưa có
+// Khởi động session một lần duy nhất (idempotent)
 if (session_status() === PHP_SESSION_NONE) {
     session_start([
-        'cookie_httponly' => true,   // Chặn JS đọc cookie (XSS protection)
+        'cookie_httponly' => true,   // Chặn JS đọc cookie → chống XSS
         'cookie_samesite' => 'Lax',  // Chống CSRF cơ bản
-        'use_strict_mode' => true,   // Session ID nghiêm ngặt
+        'use_strict_mode' => true,   // Từ chối session ID không hợp lệ
     ]);
 }
 
+// ──────────────────────────────────────────────────────────────────
+// KIỂM TRA TRẠNG THÁI ĐĂNG NHẬP
+// ──────────────────────────────────────────────────────────────────
+
 /**
- * Kiểm tra người dùng đã đăng nhập chưa
- * @return bool
+ * Kiểm tra người dùng đã đăng nhập chưa.
  */
 function isLoggedIn(): bool
 {
-    return isset($_SESSION['user_id']) && isset($_SESSION['role']);
+    return isset($_SESSION['user']['user_id'], $_SESSION['user']['role']);
 }
 
 /**
- * Kiểm tra role có phải Admin không
- * @return bool
+ * Lấy thông tin người dùng hiện tại từ session.
+ *
+ * @return array|null  Trả về null nếu chưa đăng nhập.
  */
-function isAdmin(): bool
+function currentUser(): ?array
 {
-    return isLoggedIn() && $_SESSION['role'] === 'Admin';
+    return $_SESSION['user'] ?? null;
 }
 
 /**
- * Kiểm tra role có phải Staff không
- * @return bool
+ * Lấy role của người dùng hiện tại.
+ *
+ * @return string  'Admin' | 'Staff' | ''
  */
-function isStaff(): bool
+function currentRole(): string
 {
-    return isLoggedIn() && $_SESSION['role'] === 'Staff';
+    return $_SESSION['user']['role'] ?? '';
 }
 
+// ──────────────────────────────────────────────────────────────────
+// GUARD FUNCTIONS — Dùng ở đầu mỗi page/endpoint
+// ──────────────────────────────────────────────────────────────────
+
 /**
- * Yêu cầu đăng nhập - đá về trang login nếu chưa login
- * Dùng ở đầu mọi trang cần xác thực
+ * Yêu cầu đăng nhập.
+ * Chưa đăng nhập → redirect về login.php.
+ *
+ * @param string $loginUrl  Đường dẫn tương đối về trang login.
  */
-function requireLogin(): void
+function requireLogin(string $loginUrl = '/login.php'): void
 {
     if (!isLoggedIn()) {
-        header('Location: index.php?reason=unauthenticated');
+        header('Location: ' . $loginUrl . '?reason=unauthenticated');
         exit;
     }
 }
 
 /**
- * Yêu cầu quyền Admin - đá về dashboard tương ứng nếu không đủ quyền
- * Dùng ở đầu các trang trong /admin/
+ * Yêu cầu role cụ thể.
+ *
+ * Logic:
+ *   - Chưa đăng nhập             → redirect về login.php
+ *   - Role không khớp (admin)    → redirect về staff/dashboard.php + 403
+ *   - Role không khớp (staff)    → redirect về admin/dashboard.php + 403
+ *
+ * @param string $requiredRole  'Admin' hoặc 'Staff' (case-sensitive theo DB)
+ */
+function requireRole(string $requiredRole): void
+{
+    // Bước 1: Phải đăng nhập trước
+    if (!isLoggedIn()) {
+        header('Location: /login.php?reason=unauthenticated');
+        exit;
+    }
+
+    $actual = currentRole();
+
+    // Bước 2: Kiểm tra role
+    if ($actual !== $requiredRole) {
+        // Redirect về dashboard phù hợp với role thực tế của người dùng
+        $fallback = match ($actual) {
+            'Admin' => '/admin/dashboard.php',
+            'Staff' => '/staff/dashboard.php',
+            default => '/login.php',
+        };
+
+        header('HTTP/1.1 403 Forbidden');
+        header('Location: ' . $fallback . '?reason=forbidden');
+        exit;
+    }
+}
+
+/**
+ * Shortcut: chỉ cho phép Admin.
  */
 function requireAdmin(): void
 {
-    requireLogin();
-    if (!isAdmin()) {
-        // Staff cố vào trang admin -> redirect về dashboard của Staff
-        header('Location: staff/dashboard.php?reason=forbidden');
-        exit;
-    }
+    requireRole('Admin');
 }
 
 /**
- * Yêu cầu quyền Staff - đá về dashboard tương ứng nếu không đủ quyền
- * Dùng ở đầu các trang trong /staff/ (nếu muốn chặn Admin)
+ * Shortcut: chỉ cho phép Staff.
  */
 function requireStaff(): void
 {
-    requireLogin();
-    if (!isStaff()) {
-        // Admin cố vào trang staff -> redirect về dashboard của Admin
-        header('Location: admin/dashboard.php');
-        exit;
-    }
+    requireRole('Staff');
 }
 
 /**
- * Yêu cầu role cụ thể - hàm chung cho mọi role
- * Dùng thay thế cho requireAdmin() / requireStaff() khi cần linh hoạt
- * @param string $role  Role yêu cầu: 'Admin' hoặc 'Staff'
+ * Shortcut: cho phép cả Admin lẫn Staff (chỉ cần đăng nhập).
  */
-function requireRole(string $role): void
+function requireAnyRole(): void
 {
     requireLogin();
-    if (($_SESSION['role'] ?? '') !== $role) {
-        // Redirect về dashboard phù hợp với role thực của user
-        $redirect = ($_SESSION['role'] ?? '') === 'Admin'
-            ? 'admin/dashboard.php'
-            : 'staff/dashboard.php';
-        header('Location: ' . $redirect . '?reason=forbidden');
-        exit;
+}
+
+// ──────────────────────────────────────────────────────────────────
+// HELPER: API Guard (trả JSON thay vì redirect)
+// Dùng trong api/*.php thay vì trong views
+// ──────────────────────────────────────────────────────────────────
+
+/**
+ * Guard cho API endpoint: chưa đăng nhập → trả JSON 401.
+ * Yêu cầu api/_helpers.php đã được include trước.
+ */
+function apiRequireLogin(): void
+{
+    if (!isLoggedIn()) {
+        // json_err() được định nghĩa trong api/_helpers.php
+        json_err('Bạn chưa đăng nhập.', 401);
     }
 }
 
 /**
- * Lấy thông tin user hiện tại từ Session
- * @return array ['user_id', 'full_name', 'email', 'role']
+ * Guard cho API endpoint: sai role → trả JSON 403.
+ *
+ * @param string $requiredRole  'Admin' | 'Staff'
  */
-function getCurrentUser(): array
+function apiRequireRole(string $requiredRole): void
 {
-    return [
-        'user_id'   => $_SESSION['user_id']   ?? null,
-        'full_name' => $_SESSION['full_name']  ?? '',
-        'email'     => $_SESSION['email']      ?? '',
-        'role'      => $_SESSION['role']       ?? '',
-    ];
+    apiRequireLogin();
+
+    if (currentRole() !== $requiredRole) {
+        json_err('Bạn không có quyền thực hiện thao tác này.', 403);
+    }
 }
 
 /**
- * Đăng xuất - Huỷ session và redirect về trang login
+ * Shorthand apiRequireRole cho Admin.
  */
-function logout(): void
+function apiRequireAdmin(): void
 {
-    // Xoá toàn bộ dữ liệu session
-    $_SESSION = [];
+    apiRequireRole('Admin');
+}
 
-    // Xoá cookie session nếu có
-    if (ini_get('session.use_cookies')) {
-        $params = session_get_cookie_params();
-        setcookie(
-            session_name(), '', time() - 42000,
-            $params['path'], $params['domain'],
-            $params['secure'], $params['httponly']
-        );
-    }
-
-    session_destroy();
-    header('Location: index.php?reason=logged_out');
-    exit;
+/**
+ * Shorthand apiRequireRole cho Staff.
+ */
+function apiRequireStaff(): void
+{
+    apiRequireRole('Staff');
 }
