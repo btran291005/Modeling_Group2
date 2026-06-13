@@ -226,7 +226,7 @@
             const deviceName   = `${Api.esc(item.brand_name || '')} ${Api.esc(item.model_name || '')}`.trim();
             const config       = `${item.ram_gb ?? '—'}GB / ${item.rom_gb ?? '—'}GB`;
             const battery      = item.battery_health != null ? `${item.battery_health}%` : '—';
-            const price        = item.price != null ? Api.vnd(item.price) : '—';
+            const price        = item.price != null ? fmtVnd(item.price) : '—';
             const customer     = item.customer_name ? `${Api.esc(item.customer_name)}<br><small class="text-muted">${Api.esc(item.phone_number || '')}</small>` : '<span class="text-muted">—</span>';
             const staffName    = Api.esc(item.staff_name || '—');
             const receivedAt   = Api.esc(item.received_at || '—');
@@ -359,8 +359,8 @@
             const deviceName  = `${Api.esc(item.brand_name || '')} ${Api.esc(item.model_name || '')}`.trim();
             const config      = `${item.ram_gb ?? '—'}GB / ${item.rom_gb ?? '—'}GB`;
             const battery     = item.battery_health != null ? `${item.battery_health}%` : '—';
-            const aiPrice     = item.ai_suggested_price != null ? Api.vnd(item.ai_suggested_price) : '—';
-            const finalPrice  = item.final_status === 'Purchased' && item.ai_suggested_price != null ? Api.vnd(item.ai_suggested_price) : '<span class="text-muted">—</span>';
+            const aiPrice     = item.ai_suggested_price != null ? fmtVnd(item.ai_suggested_price) : '—';
+            const finalPrice  = item.final_status === 'Purchased' && item.ai_suggested_price != null ? fmtVnd(item.ai_suggested_price) : '<span class="text-muted">—</span>';
             const statusBadge = SESSION_STATUS_BADGES[item.final_status] || Api.esc(item.final_status || '—');
             const staffName   = Api.esc(item.staff_name || '—');
             const createdAt   = Api.esc(item.created_at || '—');
@@ -431,7 +431,7 @@
 
         if (!elStaff && !elBrands && !elRecent) return;
 
-        const res = await Api.get('../api/admin_dashboard_api.php', 'get_metrics');
+        const res = await Api.get('admin_dashboard_api.php', 'get_metrics');
 
         if (!res.ok) {
             if (elError) elError.classList.remove('d-none');
@@ -514,7 +514,7 @@
         if (!rulesPage.tbody) return;
 
         rulesPage.tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-1"></span>Đang tải...</td></tr>`;
-        const res = await Api.get('../api/ai_rule_api.php', 'list');
+        const res = await Api.get('ai_rule_api.php', 'list');
 
         if (!res.ok || !Array.isArray(res.data)) {
             rulesPage.tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">${Api.esc(res.message || 'Không thể tải danh sách quy tắc.')}</td></tr>`;
@@ -571,7 +571,7 @@
         document.querySelectorAll('.btn-rule-toggle').forEach(btn => {
             btn.addEventListener('click', async function () {
                 this.disabled = true;
-                const res = await Api.postJson('../api/ai_rule_api.php', 'toggle', { id: parseInt(this.dataset.id) });
+                const res = await Api.postJson('ai_rule_api.php', 'toggle', { id: parseInt(this.dataset.id) });
                 this.disabled = false;
                 if (!res.ok) alert(res.message || 'Đổi trạng thái thất bại.');
                 loadAiRules();
@@ -635,7 +635,7 @@
             const btnSubmit = document.getElementById('btn-rule-submit');
             if (btnSubmit) btnSubmit.disabled = true;
 
-            const res = await Api.postJson('../api/ai_rule_api.php', action, payload);
+            const res = await Api.postJson('ai_rule_api.php', action, payload);
 
             if (btnSubmit) btnSubmit.disabled = false;
 
@@ -655,7 +655,7 @@
             const id = parseInt(rulesPage.deleteRuleId.value);
             if (!id) return;
             this.disabled = true;
-            const res = await Api.postJson('../api/ai_rule_api.php', 'delete', { id });
+            const res = await Api.postJson('ai_rule_api.php', 'delete', { id });
             this.disabled = false;
             rulesPage.modalDelete?.hide();
             alert(res.message || (res.ok ? 'Đã xóa quy tắc.' : 'Xóa thất bại.'));
