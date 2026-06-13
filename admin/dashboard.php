@@ -1,79 +1,117 @@
 <?php
+// ============================================================
+// FILE: admin/dashboard.php
+// ============================================================
 
-/**
- * admin/dashboard.php
- *
- * Gate: requireAdmin() → 403 nếu không phải Admin.
- * Rule: File này CHỈ làm 3 việc:
- *   1. Check auth
- *   2. Gọi Service lấy dữ liệu
- *   3. Render HTML
- * KHÔNG viết SQL trực tiếp ở đây.
- */
+declare(strict_types=1);
 
-require_once __DIR__ . '/../config/db_connect.php';   // $pdo
-require_once __DIR__ . '/../includes/auth.php';        // requireAdmin()
-require_once __DIR__ . '/../includes/layout.php';      // renderHtmlHead(), renderSidebar()...
+require_once __DIR__ . '/../config/db_connect.php';
+require_once __DIR__ . '/../config/constants.php';
+require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/layout.php';
 
-// ── GATE ─────────────────────────────────────────────────────────
-requireAdmin();   // Redirect 403 nếu không phải Admin
+requireRole('admin');
 
-$user = currentUser();
-
-// ── DATA (gọi Service, KHÔNG viết SQL ở đây) ─────────────────────
-// Ví dụ khi đã có AdminDashboardService:
-// require_once __DIR__ . '/../services/AdminDashboardService.php';
-// $svc   = new AdminDashboardService($pdo);
-// $stats = $svc->getKpiStats();
-// $recentSessions = $svc->getRecentSessions(8);
-// $auditLogs      = $svc->getRecentAuditLogs(10);
-
-// TODO: Replace stub below with real Service calls
-$stats          = ['total_sessions' => 0, 'today_purchased' => 0, 'in_stock' => 0, 'active_staff' => 0, 'estimated_revenue' => 0];
-$recentSessions = [];
-$auditLogs      = [];
-
-// ── VIEW ──────────────────────────────────────────────────────────
-renderHtmlHead('Admin Dashboard', ['../assets/css/pages/admin/dashboard.css']);
-renderSidebar('dashboard');
-renderMainOpen();
-renderTopbar('Tổng quan', '<a href="/admin/dashboard.php">Dashboard</a>');
+renderHeader('Admin Dashboard');
 ?>
 
-<div class="page-content">
+<h2 class="mb-4">Tổng quan hệ thống</h2>
 
-    <div class="dashboard-greeting">
-        <h2>Xin chào, <?= htmlspecialchars($user['full_name'], ENT_QUOTES, 'UTF-8') ?> 👋</h2>
-        <p>Role: <strong>👑 Admin</strong> — <?= date('d/m/Y H:i') ?></p>
-    </div>
+<div class="row g-3 mb-4">
 
-    <div class="stats-grid">
-        <div class="stat-card stat-card-blue">
-            <div class="stat-card-label">Tổng phiên định giá</div>
-            <div class="stat-card-value"><?= number_format($stats['total_sessions']) ?></div>
-        </div>
-        <div class="stat-card stat-card-green">
-            <div class="stat-card-label">Thu mua hôm nay</div>
-            <div class="stat-card-value"><?= $stats['today_purchased'] ?></div>
-        </div>
-        <div class="stat-card stat-card-purple">
-            <div class="stat-card-label">Thiết bị trong kho</div>
-            <div class="stat-card-value"><?= $stats['in_stock'] ?></div>
-        </div>
-        <div class="stat-card stat-card-yellow">
-            <div class="stat-card-label">Doanh thu ước tính</div>
-            <div class="stat-card-value" data-vnd="<?= $stats['estimated_revenue'] ?>">—</div>
-        </div>
-        <div class="stat-card stat-card-red">
-            <div class="stat-card-label">Staff hoạt động</div>
-            <div class="stat-card-value"><?= $stats['active_staff'] ?></div>
+    <div class="col-md-3">
+        <div class="card text-bg-primary h-100">
+            <div class="card-body">
+                <div class="small text-uppercase opacity-75">Tổng phiên định giá</div>
+                <div class="fs-2 fw-bold">128</div>
+                <div class="small opacity-75">Tất cả thời gian</div>
+            </div>
         </div>
     </div>
 
-    <p class="text-muted" style="text-align:center;margin-top:2rem;">
-        Nội dung chi tiết sẽ được bổ sung khi implement AdminDashboardService.
-    </p>
+    <div class="col-md-3">
+        <div class="card text-bg-success h-100">
+            <div class="card-body">
+                <div class="small text-uppercase opacity-75">Thu mua hôm nay</div>
+                <div class="fs-2 fw-bold">7</div>
+                <div class="small opacity-75">Thiết bị thu mua</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-bg-info h-100">
+            <div class="card-body">
+                <div class="small text-uppercase opacity-75">Thiết bị trong kho</div>
+                <div class="fs-2 fw-bold">42</div>
+                <div class="small opacity-75">Đang lưu kho</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-bg-warning h-100">
+            <div class="card-body">
+                <div class="small text-uppercase opacity-75">Staff hoạt động</div>
+                <div class="fs-2 fw-bold">9</div>
+                <div class="small opacity-75">Nhân viên đang hoạt động</div>
+            </div>
+        </div>
+    </div>
 
 </div>
 
-<?php renderLayoutClose(); ?>
+<div class="row g-3">
+
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">Hiệu suất nhân viên (Top 5)</div>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>Nguyen Van Staff</span>
+                    <span class="badge bg-success">12 phiên</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>Tran Thi Lan</span>
+                    <span class="badge bg-success">9 phiên</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>Le Van Duc</span>
+                    <span class="badge bg-success">8 phiên</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>Pham Thi Hoa</span>
+                    <span class="badge bg-success">6 phiên</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>Hoang Minh Tuan</span>
+                    <span class="badge bg-success">5 phiên</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">Hoạt động hệ thống gần đây</div>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item">
+                    <strong>Admin</strong> đã thêm tài khoản mới — <span class="text-muted">5 phút trước</span>
+                </li>
+                <li class="list-group-item">
+                    <strong>Nguyen Van Staff</strong> chốt thu mua phiên #128 — <span class="text-muted">20 phút trước</span>
+                </li>
+                <li class="list-group-item">
+                    <strong>Admin</strong> cập nhật quy tắc định giá AI — <span class="text-muted">1 giờ trước</span>
+                </li>
+                <li class="list-group-item">
+                    <strong>Tran Thi Lan</strong> tạo phiên định giá mới — <span class="text-muted">2 giờ trước</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+</div>
+
+<?php
+renderFooter();

@@ -1,0 +1,70 @@
+<?php
+// ============================================================
+// FILE: api/inventory_api.php
+// ============================================================
+
+declare(strict_types=1);
+
+require_once __DIR__ . '/../config/db_connect.php';
+require_once __DIR__ . '/../config/constants.php';
+require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/_helpers.php';
+require_once __DIR__ . '/../services/InventoryService.php';
+
+requireLogin(); // Staff + Admin đều xem được (R03: Staff chỉ đổi status, không xóa)
+
+$svc    = new InventoryService($pdo);
+$action = get_action();
+
+switch ($action) {
+
+    // ══════════════════════════════════════════════════════════
+    // case 'list'
+    // GET /api/inventory_api.php?action=list
+    // Quyền  : Đã đăng nhập
+    // Trả về : [{imei, gadget_status, model_name, brand_name, ...}, ...]
+    // ══════════════════════════════════════════════════════════
+    case 'list':
+        $items = $svc->getStaffInventory();
+        json_ok($items);
+
+
+    // ══════════════════════════════════════════════════════════
+    // case 'update_status'
+    // POST /api/inventory_api.php?action=update_status
+    // Body   : { "id": "<imei>", "status": "Stored" }
+    // Quyền  : Đã đăng nhập (Staff được đổi trạng thái, không xóa)
+    // Trả về : { success info }
+    // ══════════════════════════════════════════════════════════
+    case 'update_status':
+        require_method('POST');
+
+        $body   = json_decode(file_get_contents('php://input'), true) ?? [];
+        $imei   = trim((string) ($body['id']     ?? ''));
+        $status = trim((string) ($body['status'] ?? ''));
+
+        if ($imei === '') {
+            json_err('Thiếu IMEI thiết bị.');
+        }
+
+        $allowedStatuses = ['Pending', 'Stored', 'Refurbishing', 'Sold'];
+        if (!in_array($status, $allowedStatuses, true)) {
+            json_err('Trạng thái không hợp lệ.');
+        }
+
+        $ok = $svc->updateStatus($imei, $status);
+
+        if (!$ok) {
+            json_err('Không thể cập nhật trạng thái. Vui lòng kiểm tra lại IMEI.', 404);
+        }
+
+        json_ok(['imei' => $imei, 'status' => $status], 'Cập nhật trạng thái thành công.');
+
+
+    // ══════════════════════════════════════════════════════════
+    // default — action không tồn tại
+    // ══════════════════════════════════════════════════════════
+    default:
+        $safeAction = htmlspecialchars($action, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        json_err("Action '{$safeAction}' không hợp lệ.", 400);
+}
