@@ -15,7 +15,7 @@ apiRequireLogin(); // Nhân viên đăng nhập là được, không cần Admin
 $staffId = (int) ($_SESSION['user']['user_id'] ?? 0);
 
 if ($staffId <= 0) {
-    json_fail('Không xác định được phiên đăng nhập.', 401);
+    json_err('Không xác định được phiên đăng nhập.', 401);
 }
 
 $action = $_GET['action'] ?? '';
@@ -36,11 +36,11 @@ switch ($action) {
                 'recent' => $recent,
             ]);
         } catch (PDOException $e) {
-            json_fail('Lỗi truy vấn: ' . $e->getMessage());
+            json_err('Lỗi truy vấn: ' . $e->getMessage());
         }
         break;
 
     default:
-        json_fail('Action không hợp lệ.', 404);
+        json_err('Action không hợp lệ.', 404);
         break;
 }

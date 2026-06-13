@@ -34,11 +34,11 @@ switch ($action) {
                 'recent' => $recent,
             ]);
         } catch (PDOException $e) {
-            json_fail('Lỗi truy vấn dữ liệu: ' . $e->getMessage());
+            json_err('Lỗi truy vấn dữ liệu: ' . $e->getMessage());
         }
         break;
 
     default:
-        json_fail('Action không hợp lệ.', 404);
+        json_err('Action không hợp lệ.', 404);
         break;
 }

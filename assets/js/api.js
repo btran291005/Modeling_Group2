@@ -216,7 +216,7 @@
 
     /* ----------------------------------------------------------
      * loadDashboardMetrics()
-     * GET ../api/dashboard_api.php?action=get_metrics
+     * GET ../api/admin_dashboard_api.php?action=get_metrics
      * Trả về: json_ok({ cards: {...}, brands: [...], recent: [...] })
      * ---------------------------------------------------------- */
     async function loadDashboardMetrics() {
@@ -232,7 +232,7 @@
         // Nếu không có phần tử nào → không phải trang dashboard, bỏ qua
         if (!elStaff && !elBrands && !elRecent) return;
 
-        const res = await Api.get('../api/dashboard_api.php', 'get_metrics');
+        const res = await Api.get('../api/admin_dashboard_api.php', 'get_metrics');
 
         if (!res.ok) {
             if (elError) elError.classList.remove('d-none');
