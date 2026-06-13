@@ -32,7 +32,7 @@ switch ($action) {
     // ══════════════════════════════════════════════════════════
     // case 'update_status'
     // POST /api/inventory_api.php?action=update_status
-    // Body   : { "id": <int>, "status": "Stored" }
+    // Body   : { "imei": "<string>", "status": "Stored" }
     // Quyền  : Đã đăng nhập (Staff được đổi trạng thái, không xóa)
     // Trả về : { success info }
     // ══════════════════════════════════════════════════════════
@@ -40,25 +40,25 @@ switch ($action) {
         require_method('POST');
 
         $body   = json_decode(file_get_contents('php://input'), true) ?? [];
-        $id     = (int) ($body['id']     ?? 0);
+        $imei   = trim((string) ($body['imei']   ?? ''));
         $status = trim((string) ($body['status'] ?? ''));
 
-        if ($id <= 0) {
-            json_err('Thiếu hoặc sai ID thiết bị.');
+        if ($imei === '') {
+            json_err('Thiếu hoặc sai IMEI thiết bị.');
         }
 
-        $allowedStatuses = ['Pending', 'Stored', 'Refurbishing', 'Sold'];
+        $allowedStatuses = ['Stored', 'Refurbishing', 'Sold'];
         if (!in_array($status, $allowedStatuses, true)) {
             json_err('Trạng thái không hợp lệ.');
         }
 
-        $ok = $svc->updateStatus($id, $status);
+        $ok = $svc->updateStatus($imei, $status);
 
         if (!$ok) {
-            json_err('Không thể cập nhật trạng thái. Vui lòng kiểm tra lại ID.', 404);
+            json_err('Không thể cập nhật trạng thái. Vui lòng kiểm tra lại IMEI.', 404);
         }
 
-        json_ok(['id' => $id, 'status' => $status], 'Cập nhật trạng thái thành công.');
+        json_ok(['imei' => $imei, 'status' => $status], 'Cập nhật trạng thái thành công.');
 
 
     // ══════════════════════════════════════════════════════════
