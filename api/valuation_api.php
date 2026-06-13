@@ -2,200 +2,273 @@
 
 declare(strict_types=1);
 
-// ── Bootstrap ──────────────────────────────────────────────
-require_once __DIR__ . '/../config/db_connect.php';     // $pdo
-require_once __DIR__ . '/../config/constants.php';       // Constants
-require_once __DIR__ . '/../config/ai_module.php';       // getAISuggestedPrice()
-require_once __DIR__ . '/../includes/auth.php';          // isLoggedIn(), isAdmin(), v.v.
-require_once __DIR__ . '/../api/_helpers.php';           // json_ok(), json_err(), get_action(), ...
+// ══════════════════════════════════════════════════════════════
+// api/valuation_api.php
+//
+// Endpoint định giá & thu mua thiết bị.
+// Sử dụng switch($_GET['action']) để phân luồng.
+// Mọi response đều qua json_ok() / json_err() và exit ngay.
+// ══════════════════════════════════════════════════════════════
+
+// ── Bootstrap ─────────────────────────────────────────────────
+require_once __DIR__ . '/../config/db_connect.php';      // $pdo  (PDO instance)
+require_once __DIR__ . '/../config/constants.php';        // APP_* constants
+require_once __DIR__ . '/../config/ai_module.php';        // getAISuggestedPrice()
+require_once __DIR__ . '/../includes/auth.php';           // isLoggedIn(), isAdmin(), ...
+require_once __DIR__ . '/../api/_helpers.php';            // json_ok(), json_err(), post_str(), ...
 require_once __DIR__ . '/../services/ValuationService.php';
 
-// ── Khởi tạo service ───────────────────────────────────────
+// ── Khởi tạo Service ──────────────────────────────────────────
 $svc = new ValuationService($pdo);
 
-
-// ══════════════════════════════════════════════════════════════
-// ROUTER — Switch theo ?action=
-// ══════════════════════════════════════════════════════════════
+// ── Router ────────────────────────────────────────────────────
 $action = get_action();
 
 switch ($action) {
 
-    // ──────────────────────────────────────────────────────────
-    // GET brands
-    // Ai được gọi: Staff + Admin (đã đăng nhập)
-    // Trả về: danh sách hãng để render dropdown
-    //
-    // Logic (CHƯA IMPLEMENT):
-    //   require_auth() → $svc->getBrands() → json_ok($data)
-    // ──────────────────────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════
+    // case 'brands'
+    // GET /api/valuation_api.php?action=brands
+    // Quyền  : Đã đăng nhập (Staff + Admin)
+    // Trả về : [{brand_id, brand_name}, ...]
+    // ══════════════════════════════════════════════════════════
     case 'brands':
-        // TODO: require_auth()
-        // TODO: $brands = $svc->getBrands();
-        // TODO: json_ok($brands);
-        json_err('Not implemented yet.', 501);
+        require_auth();
+
+        $brands = $svc->getBrands();
+        json_ok($brands);
 
 
-    // ──────────────────────────────────────────────────────────
-    // GET models?brand_id=N
-    // Ai được gọi: Staff + Admin (đã đăng nhập)
-    // Trả về: danh sách model của hãng
-    //
-    // Logic (CHƯA IMPLEMENT):
-    //   require_auth()
-    //   $brandId = (int)$_GET['brand_id'] → validate > 0
-    //   $models = $svc->getModelsByBrand($brandId)
-    //   json_ok($models)
-    // ──────────────────────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════
+    // case 'models'
+    // GET /api/valuation_api.php?action=models&brand_id=N
+    // Quyền  : Đã đăng nhập
+    // Trả về : [{model_id, model_name, ram_gb, rom_gb, base_price}, ...]
+    // ══════════════════════════════════════════════════════════
     case 'models':
-        // TODO: require_auth()
-        // TODO: $brandId = (int)($_GET['brand_id'] ?? 0);
-        // TODO: if (!$brandId) json_err('Thiếu brand_id.');
-        // TODO: $models = $svc->getModelsByBrand($brandId);
-        // TODO: json_ok($models);
-        json_err('Not implemented yet.', 501);
+        require_auth();
+
+        $brandId = (int) ($_GET['brand_id'] ?? 0);
+        if ($brandId <= 0) {
+            json_err('Thiếu hoặc sai brand_id.');
+        }
+
+        try {
+            $models = $svc->getModelsByBrand($brandId);
+            json_ok($models);
+        } catch (InvalidArgumentException $e) {
+            json_err($e->getMessage());
+        }
 
 
-    // ──────────────────────────────────────────────────────────
-    // GET rules
-    // Ai được gọi: Staff (để render checklist tình trạng vật lý)
-    // Trả về: danh sách quy tắc AI đang bật
-    //
-    // Logic (CHƯA IMPLEMENT):
-    //   require_role('Staff')
-    //   $rules = $svc->getActiveRules()
-    //   json_ok($rules)
-    // ──────────────────────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════
+    // case 'rules'
+    // GET /api/valuation_api.php?action=rules
+    // Quyền  : Staff (checklist tình trạng vật lý khi định giá)
+    // Trả về : [{rule_id, condition_name, deduction_percent}, ...]
+    // ══════════════════════════════════════════════════════════
     case 'rules':
-        // TODO: require_role('Staff')
-        // TODO: $rules = $svc->getActiveRules();
-        // TODO: json_ok($rules);
-        json_err('Not implemented yet.', 501);
+        require_role('Staff');
+
+        $rules = $svc->getActiveRules();
+        json_ok($rules);
 
 
-    // ──────────────────────────────────────────────────────────
-    // POST valuate
-    // Ai được gọi: Staff (UC11/UC12)
-    // Body: model_id, battery_health, rule_ids[] (optional)
-    // Trả về: session_id, price, price_formatted, reasoning, ...
-    //
-    // Logic (CHƯA IMPLEMENT):
-    //   require_method('POST')
-    //   require_role('Staff')
-    //   $modelId       = post_int('model_id')     → validate > 0
-    //   $batteryHealth = post_int('battery_health', 100)
-    //   $ruleIds       = post_int_array('rule_ids')
-    //   try {
-    //     $result = $svc->valuate($_SESSION['user_id'], $modelId, $batteryHealth, $ruleIds)
-    //     json_ok($result, 'Định giá thành công')
-    //   } catch (InvalidArgumentException $e) { json_err($e->getMessage()) }
-    //     catch (RuntimeException $e)         { json_err($e->getMessage(), 500) }
-    // ──────────────────────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════
+    // case 'valuate'
+    // POST /api/valuation_api.php?action=valuate
+    // Quyền  : Staff
+    // Body   : model_id, battery_health, rule_ids[] (optional)
+    // Trả về : { session_id, price, price_formatted, reasoning,
+    //            device_name, brand_name, battery_health,
+    //            rules_applied, fallback }
+    // ══════════════════════════════════════════════════════════
     case 'valuate':
-        // TODO: require_method('POST')
-        // TODO: require_role('Staff')
-        // TODO: parse + validate input
-        // TODO: call $svc->valuate(...)
-        // TODO: json_ok($result)
-        json_err('Not implemented yet.', 501);
+        require_method('POST');
+        require_role('Staff');
+
+        // ── Parse & Validate input ────────────────────────────
+        $modelId       = post_int('model_id');
+        $batteryHealth = post_int('battery_health', 100);
+        $ruleIds       = post_int_array('rule_ids');   // [] nếu không gửi
+
+        if ($modelId <= 0) {
+            json_err('Thiếu model_id hoặc model_id không hợp lệ.');
+        }
+        if ($batteryHealth < 1 || $batteryHealth > 100) {
+            json_err('battery_health phải nằm trong khoảng 1–100.');
+        }
+
+        // ── Gọi Service ───────────────────────────────────────
+        try {
+            $result = $svc->valuate(
+                (int) $_SESSION['user_id'],
+                $modelId,
+                $batteryHealth,
+                $ruleIds
+            );
+            json_ok($result, 'Định giá thành công.');
+        } catch (InvalidArgumentException $e) {
+            json_err($e->getMessage(), 400);
+        } catch (RuntimeException $e) {
+            json_err($e->getMessage(), 500);
+        }
 
 
-    // ──────────────────────────────────────────────────────────
-    // POST confirm_purchase
-    // Ai được gọi: Staff (UC13)
-    // Body: session_id, imei, customer_name, customer_phone
-    // Trả về: { imei, customer_id, session_id }
-    //
-    // Logic (CHƯA IMPLEMENT):
-    //   require_method('POST')
-    //   require_role('Staff')
-    //   $sessionId     = post_int('session_id')    → validate > 0
-    //   $imei          = post_str('imei')           → is_valid_imei()
-    //   $customerName  = post_str('customer_name')  → not empty
-    //   $customerPhone = post_str('customer_phone') → is_valid_vn_phone()
-    //   try {
-    //     $result = $svc->confirmPurchase($_SESSION['user_id'], $sessionId, $imei, ...)
-    //     json_ok($result, 'Thu mua thành công! Thiết bị đã nhập kho.')
-    //   } catch (...) { json_err(...) }
-    // ──────────────────────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════
+    // case 'confirm_purchase'
+    // POST /api/valuation_api.php?action=confirm_purchase
+    // Quyền  : Staff
+    // Body   : session_id, imei, customer_name, customer_phone
+    // Trả về : { session_id, imei, customer_id, purchase_id, inventory_id }
+    // ══════════════════════════════════════════════════════════
     case 'confirm_purchase':
-        // TODO: require_method('POST')
-        // TODO: require_role('Staff')
-        // TODO: parse + validate input
-        // TODO: call $svc->confirmPurchase(...)
-        // TODO: json_ok($result, '...')
-        json_err('Not implemented yet.', 501);
+        require_method('POST');
+        require_role('Staff');
+
+        // ── Parse ─────────────────────────────────────────────
+        $sessionId     = post_int('session_id');
+        $imei          = post_str('imei');
+        $customerName  = post_str('customer_name');
+        $customerPhone = post_str('customer_phone');
+
+        // ── Validate ──────────────────────────────────────────
+        if ($sessionId <= 0) {
+            json_err('Thiếu session_id.');
+        }
+        if (!is_valid_imei($imei)) {
+            json_err('IMEI không hợp lệ (phải đúng 15 chữ số).');
+        }
+        if ($customerName === '') {
+            json_err('Tên khách hàng không được để trống.');
+        }
+        if (!is_valid_vn_phone($customerPhone)) {
+            json_err('Số điện thoại không hợp lệ (định dạng Việt Nam: 03x/05x/07x/08x/09x).');
+        }
+
+        // ── Gọi Service ───────────────────────────────────────
+        try {
+            $result = $svc->confirmPurchase(
+                (int) $_SESSION['user_id'],
+                $sessionId,
+                $imei,
+                $customerName,
+                $customerPhone
+            );
+            json_ok($result, 'Thu mua thành công! Thiết bị đã nhập kho.');
+        } catch (InvalidArgumentException $e) {
+            json_err($e->getMessage(), 400);
+        } catch (RuntimeException $e) {
+            // Phân biệt lỗi nghiệp vụ (IMEI trùng, session sai...) vs lỗi DB
+            $code = str_contains($e->getMessage(), 'Lỗi') ? 500 : 409;
+            json_err($e->getMessage(), $code);
+        }
 
 
-    // ──────────────────────────────────────────────────────────
-    // POST decline
-    // Ai được gọi: Staff
-    // Body: session_id
-    // Trả về: { session_id, new_status }
-    //
-    // Logic (CHƯA IMPLEMENT):
-    //   require_method('POST')
-    //   require_role('Staff')
-    //   $sessionId = post_int('session_id') → validate > 0
-    //   $result = $svc->declineSession($_SESSION['user_id'], $sessionId)
-    //   json_ok($result, 'Đã ghi nhận từ chối.')
-    // ──────────────────────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════
+    // case 'decline'
+    // POST /api/valuation_api.php?action=decline
+    // Quyền  : Staff
+    // Body   : session_id
+    // Trả về : { session_id, new_status }
+    // ══════════════════════════════════════════════════════════
     case 'decline':
-        // TODO: require_method('POST')
-        // TODO: require_role('Staff')
-        // TODO: $sessionId = post_int('session_id');
-        // TODO: if (!$sessionId) json_err('Thiếu session_id.');
-        // TODO: $result = $svc->declineSession($_SESSION['user_id'], $sessionId);
-        // TODO: json_ok($result, 'Đã ghi nhận từ chối.');
-        json_err('Not implemented yet.', 501);
+        require_method('POST');
+        require_role('Staff');
+
+        $sessionId = post_int('session_id');
+        if ($sessionId <= 0) {
+            json_err('Thiếu hoặc sai session_id.');
+        }
+
+        try {
+            $result = $svc->declineSession(
+                (int) $_SESSION['user_id'],
+                $sessionId
+            );
+            json_ok($result, 'Đã ghi nhận từ chối.');
+        } catch (InvalidArgumentException $e) {
+            json_err($e->getMessage(), 400);
+        } catch (RuntimeException $e) {
+            json_err($e->getMessage(), 409);
+        }
 
 
-    // ──────────────────────────────────────────────────────────
-    // GET history
-    // Ai được gọi: Staff (xem lịch sử CỦA MÌNH, UC14)
-    // Params: page, per_page, status, q
-    // Trả về: { sessions, total, stats }
-    //
-    // Logic (CHƯA IMPLEMENT):
-    //   require_role('Staff')
-    //   $page    = (int)($_GET['page']     ?? 1)
-    //   $perPage = (int)($_GET['per_page'] ?? 15)
-    //   $status  = $_GET['status'] ?? ''
-    //   $search  = trim($_GET['q'] ?? '')
-    //   $result  = $svc->getHistory($_SESSION['user_id'], $page, $perPage, $status, $search)
-    //   json_ok($result)
-    // ──────────────────────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════
+    // case 'history'
+    // GET /api/valuation_api.php?action=history
+    //     &page=1&per_page=15&status=confirmed&q=iphone
+    // Quyền  : Staff (chỉ xem lịch sử của chính mình)
+    // Trả về : { sessions, total, page, per_page, stats }
+    // ══════════════════════════════════════════════════════════
     case 'history':
-        // TODO: require_role('Staff')
-        // TODO: parse pagination params
-        // TODO: $result = $svc->getHistory($_SESSION['user_id'], ...);
-        // TODO: json_ok($result);
-        json_err('Not implemented yet.', 501);
+        require_role('Staff');
+
+        $page    = max(1, (int) ($_GET['page']     ?? 1));
+        $perPage = max(1, (int) ($_GET['per_page'] ?? 15));
+        $status  = trim($_GET['status'] ?? '');
+        $search  = trim($_GET['q']      ?? '');
+
+        // Chỉ cho phép các giá trị status hợp lệ
+        $allowedStatus = ['', 'pending', 'confirmed', 'declined'];
+        if (!in_array($status, $allowedStatus, true)) {
+            json_err("status '{$status}' không hợp lệ.");
+        }
+
+        $result = $svc->getHistory(
+            (int) $_SESSION['user_id'],
+            $page,
+            $perPage,
+            $status,
+            $search
+        );
+        json_ok($result);
 
 
-    // ──────────────────────────────────────────────────────────
-    // GET all_sessions  (Admin only)
-    // Ai được gọi: Admin (nhật ký định giá toàn hệ thống)
-    // Params: page, per_page, status, q, staff_id, date_from, date_to
-    // Trả về: { sessions, total, stats }
-    //
-    // Logic (CHƯA IMPLEMENT):
-    //   require_admin()
-    //   parse tất cả filter params
-    //   $result = $svc->getAllSessions(...)
-    //   json_ok($result)
-    // ──────────────────────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════
+    // case 'all_sessions'
+    // GET /api/valuation_api.php?action=all_sessions
+    //     &page=1&per_page=20&status=&q=&staff_id=0
+    //     &date_from=2025-01-01&date_to=2025-12-31
+    // Quyền  : Admin only
+    // Trả về : { sessions, total, page, per_page, stats }
+    // ══════════════════════════════════════════════════════════
     case 'all_sessions':
-        // TODO: require_admin()
-        // TODO: parse pagination + filter params
-        // TODO: $result = $svc->getAllSessions(...);
-        // TODO: json_ok($result);
-        json_err('Not implemented yet.', 501);
+        require_admin();
+
+        $page     = max(1, (int) ($_GET['page']      ?? 1));
+        $perPage  = max(1, (int) ($_GET['per_page']  ?? 20));
+        $status   = trim($_GET['status']    ?? '');
+        $search   = trim($_GET['q']         ?? '');
+        $staffId  = (int) ($_GET['staff_id']  ?? 0);
+        $dateFrom = trim($_GET['date_from'] ?? '');
+        $dateTo   = trim($_GET['date_to']   ?? '');
+
+        // Validate định dạng ngày nếu có
+        $datePattern = '/^\d{4}-\d{2}-\d{2}$/';
+        if ($dateFrom !== '' && !preg_match($datePattern, $dateFrom)) {
+            json_err('date_from không hợp lệ (định dạng YYYY-MM-DD).');
+        }
+        if ($dateTo !== '' && !preg_match($datePattern, $dateTo)) {
+            json_err('date_to không hợp lệ (định dạng YYYY-MM-DD).');
+        }
+
+        $result = $svc->getAllSessions(
+            $page,
+            $perPage,
+            $status,
+            $search,
+            $staffId,
+            $dateFrom,
+            $dateTo
+        );
+        json_ok($result);
 
 
-    // ──────────────────────────────────────────────────────────
-    // DEFAULT — action không hợp lệ
-    // ──────────────────────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════
+    // default — action không tồn tại
+    // ══════════════════════════════════════════════════════════
     default:
-        json_err("Action '{$action}' không hợp lệ.", 400);
+        $safeAction = htmlspecialchars($action, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        json_err("Action '{$safeAction}' không hợp lệ.", 400);
 }
