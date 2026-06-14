@@ -28,7 +28,7 @@ if (session_status() === PHP_SESSION_NONE) {
 // BASE URL – hardcode tên thư mục project
 // ──────────────────────────────────────────────────────────────────
 
-define('APP_BASE_URL', '/Modeling');
+define('APP_BASE_URL', '/deviceintel');
 
 // ──────────────────────────────────────────────────────────────────
 // KIỂM TRA TRẠNG THÁI ĐĂNG NHẬP
