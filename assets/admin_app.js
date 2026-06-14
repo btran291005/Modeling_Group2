@@ -409,7 +409,7 @@
             const imei        = item.imei ? Api.esc(item.imei) : '<span class="text-muted">Chưa nhập</span>';
 
             return `
-                <tr class="${item.final_status === 'Declined' ? 'table-secondary' : ''}">
+                <tr>
                     <td class="text-muted small">${item.session_id}</td>
                     <td class="small">${createdAt}</td>
                     <td>
