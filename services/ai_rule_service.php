@@ -25,11 +25,10 @@ class AiRuleService
                 r.condition_name     AS rule_name,
                 r.deduction_percent  AS deduction_pct,
                 r.is_active,
-                r.created_at,
                 COUNT(srd.rule_id)   AS usage_count
             FROM ai_pricing_rules r
             LEFT JOIN session_rule_details srd ON srd.rule_id = r.rule_id
-            GROUP BY r.rule_id, r.condition_name, r.deduction_percent, r.is_active, r.created_at
+            GROUP BY r.rule_id, r.condition_name, r.deduction_percent, r.is_active
             ORDER BY r.rule_id ASC
         ");
 

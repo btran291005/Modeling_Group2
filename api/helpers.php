@@ -35,6 +35,11 @@ function json_err(string $msg, int $code = 400, mixed $data = null): never
  */
 function _send_json(array $payload, int $code): never
 {
+    // Xoá toàn bộ output buffer hiện có (notice/warning/whitespace lỡ in ra trước đó)
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+
     // Đặt header trước khi có bất kỳ output nào
     if (!headers_sent()) {
         http_response_code($code);

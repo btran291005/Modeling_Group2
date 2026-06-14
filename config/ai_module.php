@@ -3,33 +3,27 @@
  * config/ai_module.php
  * Module tích hợp Gemini 2.0 Flash để định giá thiết bị
  *
- * API Key được đọc từ biến môi trường GEMINI_API_KEY.
- * Tạo file .env hoặc set biến môi trường trên server:
- *   export GEMINI_API_KEY="AIzaSy..."
- * hoặc trong Apache VirtualHost:
- *   SetEnv GEMINI_API_KEY "AIzaSy..."
- * hoặc trong .htaccess:
- *   SetEnv GEMINI_API_KEY "AIzaSy..."
+ * API Key được đọc từ config/.env.php (không commit lên Git).
+ * Format file config/.env.php:
+ *   <?php
+ *   return [
+ *       'GEMINI_API_KEY' => 'AIzaSy...',
+ *   ];
  *
  * Xử lý 429 (rate limit): retry tối đa 2 lần với exponential backoff,
  * sau đó fallback sang công thức tính giá nội bộ.
  */
 
-// ── API Key đọc từ môi trường, KHÔNG hardcode trong source ──────
-$_envFile = __DIR__ . '/.env.php';
-$_envSecrets = require $_envFile;
-define('GEMINI_API_KEY', $_envSecrets['GEMINI_API_KEY'] ?? '');
-
-
+// ── API Key đọc từ file .env.php, KHÔNG hardcode trong source ──────
 if (!defined('GEMINI_API_KEY')) {
-    define('GEMINI_API_KEY', $_geminiApiKey);
+    $_envFile    = __DIR__ . '/.env.php';
+    $_envSecrets = file_exists($_envFile) ? require $_envFile : [];
+    define('GEMINI_API_KEY', $_envSecrets['GEMINI_API_KEY'] ?? '');
 }
 
 if (!defined('GEMINI_MAX_RETRIES')) {
     define('GEMINI_MAX_RETRIES', 2);
 }
-
-unset($_geminiApiKey);
 
 function getAISuggestedPrice(array $deviceInfo, array $activeRules): array
 {
@@ -102,7 +96,7 @@ PROMPT;
 
     // Kiểm tra API key có giá trị không
     if (GEMINI_API_KEY === '') {
-        error_log('[AI MODULE] GEMINI_API_KEY chưa được cấu hình trong biến môi trường.');
+        error_log('[AI MODULE] GEMINI_API_KEY chưa được cấu hình trong config/.env.php');
         return _fallbackPrice($deviceInfo, $totalDeduction,
             'API key chưa được cấu hình. Đã dùng công thức dự phòng.');
     }

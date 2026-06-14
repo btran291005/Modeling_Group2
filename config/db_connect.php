@@ -5,6 +5,11 @@
  * Trả về object $pdo để sử dụng ở các file khác
  */
 
+// Bật output buffering để các Notice/Warning lỡ in ra không phá JSON response
+if (ob_get_level() === 0) {
+    ob_start();
+}
+
 // --------Thông tin kết nối ----------
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'gadget_valuation');
@@ -33,9 +38,17 @@ try {
 } catch (PDOException $e) {
     // Không lộ chi tiết lỗi ra ngoài (bảo mật)
     error_log('[DB ERROR] ' . $e->getMessage());
+
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+
     http_response_code(500);
+    header('Content-Type: application/json; charset=utf-8');
     die(json_encode([
+        'ok'      => false,
         'success' => false,
-        'message' => 'Không thể kết nối cơ sở dữ liệu. Vui lòng thử lại sau.'
+        'msg'     => 'Không thể kết nối cơ sở dữ liệu. Vui lòng thử lại sau.',
+        'message' => 'Không thể kết nối cơ sở dữ liệu. Vui lòng thử lại sau.',
     ]));
 }
