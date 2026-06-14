@@ -594,6 +594,8 @@ class ValuationService
                     vs.battery_health,
                     vs.created_at,
                     dm.model_name,
+                    dm.ram_gb,
+                    dm.rom_gb,
                     b.brand_name,
                     u.full_name  AS staff_name,
                     g.imei

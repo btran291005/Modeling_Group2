@@ -21,13 +21,13 @@ renderHeader('Quy tắc định giá AI');
         <h2 class="fw-bold mb-1" style="font-size:1.55rem;color:#e6f0fa;letter-spacing:-.3px;">
             ⚙️ Quy tắc định giá AI
         </h2>
-        <p class="mb-0" style="color:#8fa8be;font-size:.9rem;">
+        <p class="mb-0" style="color:#8fa8be;font-size:1rem;">
             Quản lý các điều kiện khấu trừ khi AI định giá thiết bị.
         </p>
     </div>
     <button type="button" id="btn-open-create"
             class="btn fw-bold d-flex align-items-center gap-2"
-            style="background:rgba(13,202,240,.13);border:1px solid rgba(13,202,240,.3);color:#0dcaf0;font-size:.9rem;padding:9px 18px;border-radius:10px;">
+            style="background:rgba(13,202,240,.13);border:1px solid rgba(13,202,240,.3);color:#0dcaf0;font-size:1rem;padding:9px 18px;border-radius:10px;">
         ➕ Thêm quy tắc
     </button>
 </div>
@@ -39,28 +39,28 @@ renderHeader('Quy tắc định giá AI');
 
     <div class="col-6 col-md-3">
         <div class="rounded-3 text-center h-100 p-3" style="background:rgba(10,16,28,.9);border:1px solid rgba(255,255,255,.07);">
-            <div class="mb-1" style="font-size:.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8fa8be;">📊 Tổng quy tắc</div>
+            <div class="mb-1" style="font-size:.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8fa8be;">📊 Tổng quy tắc</div>
             <div class="fw-bold" id="stat-total" style="font-size:2rem;color:#e6f0fa;">–</div>
         </div>
     </div>
 
     <div class="col-6 col-md-3">
         <div class="rounded-3 text-center h-100 p-3" style="background:rgba(10,16,28,.9);border:1px solid rgba(255,255,255,.07);">
-            <div class="mb-1" style="font-size:.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8fa8be;">✅ Đang bật</div>
+            <div class="mb-1" style="font-size:.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8fa8be;">✅ Đang bật</div>
             <div class="fw-bold" id="stat-active" style="font-size:2rem;color:#20c997;">–</div>
         </div>
     </div>
 
     <div class="col-6 col-md-3">
         <div class="rounded-3 text-center h-100 p-3" style="background:rgba(10,16,28,.9);border:1px solid rgba(255,255,255,.07);">
-            <div class="mb-1" style="font-size:.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8fa8be;">🚫 Đã tắt</div>
+            <div class="mb-1" style="font-size:.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8fa8be;">🚫 Đã tắt</div>
             <div class="fw-bold" id="stat-inactive" style="font-size:2rem;color:#8fa8be;">–</div>
         </div>
     </div>
 
     <div class="col-6 col-md-3">
         <div class="rounded-3 text-center h-100 p-3" style="background:rgba(10,16,28,.9);border:1px solid rgba(255,255,255,.07);">
-            <div class="mb-1" style="font-size:.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8fa8be;">💸 Tổng % trừ (bật)</div>
+            <div class="mb-1" style="font-size:.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8fa8be;">💸 Tổng % trừ (bật)</div>
             <div class="fw-bold" id="stat-total-pct" style="font-size:2rem;color:#ffc107;">–</div>
         </div>
     </div>
@@ -78,17 +78,17 @@ renderHeader('Quy tắc định giá AI');
         <table class="table table-borderless table-hover align-middle mb-0">
             <thead>
                 <tr style="border-bottom:1px solid rgba(255,255,255,.05);">
-                    <th class="px-4 py-3" style="font-size:.75rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(13,202,240,.8);width:40px;">#</th>
-                    <th class="py-3"      style="font-size:.75rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(13,202,240,.8);">Điều kiện / Tên quy tắc</th>
-                    <th class="py-3 text-center" style="font-size:.75rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(13,202,240,.8);width:130px;">Khấu trừ (%)</th>
-                    <th class="py-3 text-center" style="font-size:.75rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(13,202,240,.8);width:100px;">Lần dùng</th>
-                    <th class="py-3 text-center" style="font-size:.75rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(13,202,240,.8);width:130px;">Trạng thái</th>
-                    <th class="px-4 py-3 text-center" style="font-size:.75rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(13,202,240,.8);width:140px;">Thao tác</th>
+                    <th class="px-4 py-3" style="font-size:.9rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(13,202,240,.8);width:40px;">#</th>
+                    <th class="py-3"      style="font-size:.9rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(13,202,240,.8);">Điều kiện / Tên quy tắc</th>
+                    <th class="py-3 text-center" style="font-size:.9rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(13,202,240,.8);width:130px;">Khấu trừ (%)</th>
+                    <th class="py-3 text-center" style="font-size:.9rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(13,202,240,.8);width:100px;">Lần dùng</th>
+                    <th class="py-3 text-center" style="font-size:.9rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(13,202,240,.8);width:130px;">Trạng thái</th>
+                    <th class="px-4 py-3 text-center" style="font-size:.9rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(13,202,240,.8);width:140px;">Thao tác</th>
                 </tr>
             </thead>
             <tbody id="rules-tbody">
                 <tr>
-                    <td colspan="6" class="text-center py-5" style="color:#8fa8be;font-size:.95rem;">
+                    <td colspan="6" class="text-center py-5" style="color:#8fa8be;font-size:1rem;">
                         <span class="spinner-border spinner-border-sm me-2" style="color:#0dcaf0;"></span>
                         Đang tải dữ liệu...
                     </td>
@@ -117,37 +117,37 @@ renderHeader('Quy tắc định giá AI');
                     <input type="hidden" id="rule-id" name="id" value="">
 
                     <div class="mb-3">
-                        <label for="rule-name" class="d-block mb-2" style="font-size:.8rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8fa8be;">
+                        <label for="rule-name" class="d-block mb-2" style="font-size:.9rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8fa8be;">
                             Tên / Điều kiện quy tắc <span class="text-danger">*</span>
                         </label>
                         <input type="text" class="form-control" id="rule-name" name="name"
                                placeholder="VD: Màn hình bị vỡ" required
-                               style="background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.09);border-radius:10px;color:#c8d8ea;font-size:.95rem;padding:11px 14px;">
+                               style="background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.09);border-radius:10px;color:#c8d8ea;font-size:1rem;padding:11px 14px;">
                         <div class="invalid-feedback">Vui lòng nhập tên quy tắc.</div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="rule-pct" class="d-block mb-2" style="font-size:.8rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8fa8be;">
+                        <label for="rule-pct" class="d-block mb-2" style="font-size:.9rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8fa8be;">
                             Phần trăm khấu trừ (%) <span class="text-danger">*</span>
                         </label>
                         <div class="input-group">
                             <input type="number" class="form-control" id="rule-pct" name="pct"
                                    min="0" max="100" step="0.5" placeholder="0 – 100" required
-                                   style="background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.09);border-radius:10px 0 0 10px;color:#c8d8ea;font-size:.95rem;padding:11px 14px;">
+                                   style="background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.09);border-radius:10px 0 0 10px;color:#c8d8ea;font-size:1rem;padding:11px 14px;">
                             <span class="input-group-text fw-bold"
-                                  style="background:rgba(13,202,240,.1);border:1px solid rgba(255,255,255,.09);border-left:none;border-radius:0 10px 10px 0;color:#0dcaf0;font-size:.95rem;">%</span>
+                                  style="background:rgba(13,202,240,.1);border:1px solid rgba(255,255,255,.09);border-left:none;border-radius:0 10px 10px 0;color:#0dcaf0;font-size:1rem;">%</span>
                         </div>
                         <div class="invalid-feedback">Giá trị phải từ 0 đến 100.</div>
                     </div>
 
                     <div class="mb-1">
-                        <label class="d-block mb-2" style="font-size:.8rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8fa8be;">Trạng thái</label>
+                        <label class="d-block mb-2" style="font-size:.9rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8fa8be;">Trạng thái</label>
                         <div class="form-check form-switch ps-0 d-flex align-items-center gap-3">
                             <input type="checkbox" class="form-check-input ms-0" id="rule-is-active"
                                    name="is_active" role="switch" checked
                                    style="width:2.5em;height:1.3em;cursor:pointer;">
                             <label class="form-check-label" for="rule-is-active"
-                                   style="color:#c8d8ea;font-size:.9rem;">
+                                   style="color:#c8d8ea;font-size:1rem;">
                                 Kích hoạt ngay sau khi lưu
                             </label>
                         </div>
@@ -182,10 +182,10 @@ renderHeader('Quy tắc định giá AI');
             </div>
 
             <div class="modal-body" style="padding:20px;">
-                <p class="mb-1" style="color:#8fa8be;font-size:.9rem;">Bạn sắp xoá quy tắc:</p>
+                <p class="mb-1" style="color:#8fa8be;font-size:1rem;">Bạn sắp xoá quy tắc:</p>
                 <p class="fw-bold mb-0" id="delete-rule-name" style="color:#e6f0fa;font-size:1rem;">–</p>
                 <input type="hidden" id="delete-rule-id" value="">
-                <p class="mt-2 mb-0" style="color:#5a7a94;font-size:.8rem;">Hành động này không thể hoàn tác.</p>
+                <p class="mt-2 mb-0" style="color:#5a7a94;font-size:.9rem;">Hành động này không thể hoàn tác.</p>
             </div>
 
             <div class="modal-footer" style="border-top:1px solid rgba(220,53,69,.15);padding:12px 20px;">
@@ -203,7 +203,7 @@ renderHeader('Quy tắc định giá AI');
 
 <style>
 #rules-tbody td {
-    font-size: .9rem;
+    font-size: 1rem;
     color: #c8d8ea;
     padding-top: 14px !important;
     padding-bottom: 14px !important;
