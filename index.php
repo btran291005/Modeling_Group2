@@ -7,16 +7,14 @@
 require_once __DIR__ . '/includes/auth.php';
 
 if (isLoggedIn()) {
-    // Nếu đã đăng nhập -> chuyển hướng thẳng vào dashboard theo quyền
     $destination = match (currentRole()) {
-        'Admin' => '../admin/dashboard.php',
-        'Staff' => '../staff/dashboard.php',
-        default => 'login.php',
+        'Admin' => APP_BASE_URL . '/admin/dashboard.php',
+        'Staff' => APP_BASE_URL . '/staff/dashboard.php',
+        default => APP_BASE_URL . '/login.php',
     };
     header('Location: ' . $destination);
     exit;
 } else {
-    // Nếu chưa đăng nhập -> chuyển hướng sang trang login chuyên dụng
-    header('Location: login.php');
+    header('Location: ' . APP_BASE_URL . '/login.php');
     exit;
 }

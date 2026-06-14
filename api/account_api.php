@@ -25,8 +25,6 @@ switch ($action) {
 
     // ══════════════════════════════════════════════════════════════
     // case 'login'
-    // POST /api/account_api.php?action=login
-    // Body JSON: { email, password }
     // ══════════════════════════════════════════════════════════════
     case 'login':
         require_method('POST');
@@ -51,9 +49,9 @@ switch ($action) {
             $authSvc->logLoginSuccess($user['user_id']);
 
             $redirect = match ($user['role']) {
-                'Admin' => '/admin/dashboard.php',
-                'Staff' => '/staff/dashboard.php',
-                default => '/index.php',
+                'Admin' => APP_BASE_URL . '/admin/dashboard.php',
+                'Staff' => APP_BASE_URL . '/staff/dashboard.php',
+                default => APP_BASE_URL . '/login.php',
             };
 
             json_ok([
@@ -72,7 +70,6 @@ switch ($action) {
 
     // ══════════════════════════════════════════════════════════════
     // case 'logout'
-    // POST /api/account_api.php?action=logout
     // ══════════════════════════════════════════════════════════════
     case 'logout':
         require_method('POST');
@@ -99,7 +96,6 @@ switch ($action) {
 
     // ══════════════════════════════════════════════════════════════
     // case 'me'
-    // GET /api/account_api.php?action=me
     // ══════════════════════════════════════════════════════════════
     case 'me':
         apiRequireLogin();
@@ -109,11 +105,6 @@ switch ($action) {
 
     // ══════════════════════════════════════════════════════════════
     // case 'get_list'
-    // POST /api/account_api.php?action=get_list
-    // Admin only
-    // admin/accounts.php JS gửi FormData với các field:
-    //   search, role_filter, status_filter, page, per_page
-    // Trả về format: { success, users, pagination }
     // ══════════════════════════════════════════════════════════════
     case 'get_list':
         apiRequireAdmin();
@@ -127,15 +118,12 @@ switch ($action) {
             max(5, min(50, post_int('per_page', 10)))
         );
 
-        // admin/accounts.php JS đọc data.success, data.users, data.pagination
         _send_accounts_json(true, $result['users'], $result['pagination'], '');
         break;
 
 
     // ══════════════════════════════════════════════════════════════
     // case 'create'
-    // POST /api/account_api.php?action=create
-    // Admin only
     // ══════════════════════════════════════════════════════════════
     case 'create':
         require_method('POST');
@@ -161,8 +149,6 @@ switch ($action) {
 
     // ══════════════════════════════════════════════════════════════
     // case 'update'
-    // POST /api/account_api.php?action=update
-    // Admin only
     // ══════════════════════════════════════════════════════════════
     case 'update':
         require_method('POST');
@@ -188,8 +174,6 @@ switch ($action) {
 
     // ══════════════════════════════════════════════════════════════
     // case 'toggle_status'
-    // POST /api/account_api.php?action=toggle_status
-    // Admin only
     // ══════════════════════════════════════════════════════════════
     case 'toggle_status':
         require_method('POST');
@@ -212,8 +196,6 @@ switch ($action) {
 
     // ══════════════════════════════════════════════════════════════
     // case 'reset_password'
-    // POST /api/account_api.php?action=reset_password
-    // Admin only
     // ══════════════════════════════════════════════════════════════
     case 'reset_password':
         require_method('POST');
@@ -232,8 +214,6 @@ switch ($action) {
 
     // ══════════════════════════════════════════════════════════════
     // case 'delete'
-    // POST /api/account_api.php?action=delete
-    // Admin only
     // ══════════════════════════════════════════════════════════════
     case 'delete':
         require_method('POST');
@@ -259,14 +239,10 @@ switch ($action) {
 }
 
 
-// ──────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────────
 // PRIVATE HELPERS
-// ──────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────────
 
-/**
- * Gửi JSON theo format mà admin/accounts.php JS kỳ vọng:
- * { success, message, users, pagination }
- */
 function _send_accounts_json(
     bool   $success,
     ?array $users,
@@ -285,9 +261,6 @@ function _send_accounts_json(
     exit;
 }
 
-/**
- * Đọc JSON body từ php://input.
- */
 function _parse_json_body(): array
 {
     $raw = file_get_contents('php://input');
