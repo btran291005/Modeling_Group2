@@ -121,7 +121,7 @@ renderHeader('Bảng điều khiển Tổng quan');
                     <span style="font-size:1rem;font-weight:700;color:#e6f0fa;">📊 Trạng thái Kho hàng</span>
                     <span class="badge rounded-pill" id="badge-total-gadgets"
                           style="background:rgba(13,202,240,.1);color:#0dcaf0;border:1px solid rgba(13,202,240,.2);font-size:.9rem;padding:5px 12px;">
-                        – thiết bị
+                        — thiết bị
                     </span>
                 </div>
                 <a href="inventory.php" class="btn btn-sm btn-outline-secondary" style="font-size:.9rem;padding:6px 12px;color:#c8d8ea;">
@@ -152,14 +152,14 @@ renderHeader('Bảng điều khiển Tổng quan');
                                 <div style="font-size:.85rem;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:#0dcaf0;">
                                     Tổng thiết bị
                                 </div>
-                                <div class="fw-bold" id="quick-total" style="font-size:1.8rem;color:#0dcaf0;">–</div>
+                                <div class="fw-bold" id="quick-total" style="font-size:1.8rem;color:#0dcaf0;">—</div>
                             </div>
                             <div class="rounded-3 p-3 text-center"
                                  style="background:rgba(255,193,7,.04);border:1px solid rgba(255,193,7,.1);">
                                 <div style="font-size:.85rem;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:#ffc107;">
                                     Đang xử lý
                                 </div>
-                                <div class="fw-bold" id="quick-refurb" style="font-size:1.8rem;color:#ffc107;">–</div>
+                                <div class="fw-bold" id="quick-refurb" style="font-size:1.8rem;color:#ffc107;">—</div>
                             </div>
                         </div>
                     </div>
@@ -285,7 +285,7 @@ renderFooter(['../assets/admin_app.js']);
 
 <script>
 /*
- * Dashboard patch – overrides admin_app.js renderers
+ * Dashboard patch — overrides admin_app.js renderers
  * with the new DOM ids & styles used in this template.
  *
  * DOM ids are identical to admin_app.js expectations:
@@ -335,9 +335,9 @@ renderFooter(['../assets/admin_app.js']);
             return;
         }
         el.innerHTML = data.map(item => {
-            const name    = ((item.brand_name || '') + ' ' + (item.model_name || '')).trim() || '–';
+            const name    = ((item.brand_name || '') + ' ' + (item.model_name || '')).trim() || '—';
             const badge   = GADGET_BADGES[item.status] || item.status;
-            const imei    = item.imei || '–';
+            const imei    = item.imei || '—';
             const reasons = Array.isArray(item.reasons) ? item.reasons : [];
             const rbadges = reasons.length
                 ? reasons.map(r => `<span class="badge rounded-pill me-1" ${REASON_CLS[r.type] || ''}>${r.label}</span>`).join('')
@@ -384,18 +384,18 @@ renderFooter(['../assets/admin_app.js']);
             return;
         }
         el.innerHTML = recent.map(r => {
-            const name  = ((r.brand_name || '') + ' ' + (r.model_name || '')).trim() || '–';
+            const name  = ((r.brand_name || '') + ' ' + (r.model_name || '')).trim() || '—';
             const imei  = r.imei ? `<code>${r.imei}</code>` : '<span style="color:#8fa8be;font-style:italic;">Chưa nhập</span>';
-            const date  = r.created_at ? new Date(r.created_at).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' }) : '–';
-            const badge = SESSION_BADGES[r.final_status] || `<span class="badge bg-secondary" style="font-size:.9rem;padding:5px 12px;">${r.final_status || '–'}</span>`;
+            const date  = r.created_at ? new Date(r.created_at).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' }) : '—';
+            const badge = SESSION_BADGES[r.final_status] || `<span class="badge bg-secondary" style="font-size:.9rem;padding:5px 12px;">${r.final_status || '—'}</span>`;
             const price = r.ai_suggested_price
                 ? `<span class="fw-bold" style="color:#0dcaf0;">${fmtVnd(r.ai_suggested_price)}</span>`
-                : '<span style="color:#8fa8be;">–</span>';
+                : '<span style="color:#8fa8be;">—</span>';
             return `
                 <tr>
                     <td class="px-4">${date}</td>
                     <td class="fw-semibold" style="color:#e6f0fa;">${name}</td>
-                    <td>${r.staff_name || '–'}</td>
+                    <td>${r.staff_name || '—'}</td>
                     <td>${imei}</td>
                     <td>${price}</td>
                     <td class="pe-4">${badge}</td>
