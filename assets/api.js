@@ -1,5 +1,5 @@
 // ============================================================
-// FILE: assets/js/api.js
+// FILE: assets/api.js
 // Class Wrapper chuyên xử lý việc gọi API (Fetch)
 // Dùng chung cho toàn bộ dự án
 // ============================================================

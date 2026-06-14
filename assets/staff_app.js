@@ -1,11 +1,13 @@
 // ============================================================
 // FILE: assets/js/staff_app.js
 // Logic xử lý giao diện Định giá (Staff) + Quản lý Kho + Lịch sử
-// Phụ thuộc: assets/js/api.js (object Api)
+// Phụ thuộc: assets/api.js (object Api)
 // ============================================================
 'use strict';
 
 (function () {
+
+    const API_BASE = '../api/';
 
     /* ----------------------------------------------------------
      * DOM REFS — Trang Định giá (valuation.php)
@@ -46,7 +48,7 @@
     async function initValuation() {
         if (!brandSelect) return;
 
-        const brandRes = await Api.get('valuation_api.php', 'brands');
+        const brandRes = await Api.get(API_BASE + 'valuation_api.php', 'brands');
         if (brandRes.ok && Array.isArray(brandRes.data)) {
             brandSelect.innerHTML = '<option value="">-- Chọn hãng --</option>' +
                 brandRes.data.map(b =>
@@ -56,7 +58,7 @@
             brandSelect.innerHTML = '<option value="">Lỗi tải dữ liệu hãng</option>';
         }
 
-        const rulesRes = await Api.get('valuation_api.php', 'rules');
+        const rulesRes = await Api.get(API_BASE + 'valuation_api.php', 'rules');
         if (rulesRes.ok && Array.isArray(rulesRes.data) && rulesRes.data.length > 0) {
             rulesChecklist.innerHTML = rulesRes.data.map(r => `
                 <div class="form-check">
@@ -93,7 +95,7 @@
             modelSelect.disabled  = true;
             modelSelect.innerHTML = '<option value="">Đang tải...</option>';
 
-            const res = await Api.get('valuation_api.php', 'models', { brand_id: brandId });
+            const res = await Api.get(API_BASE + 'valuation_api.php', 'models', { brand_id: brandId });
 
             if (res.ok && Array.isArray(res.data) && res.data.length > 0) {
                 modelSelect.innerHTML = '<option value="">-- Chọn dòng máy --</option>' +
@@ -162,7 +164,7 @@
             btnRunAi.disabled    = true;
             btnRunAi.textContent = '⏳ AI đang phân tích...';
 
-            const res = await Api.post('valuation_api.php', 'valuate', fd);
+            const res = await Api.post(API_BASE + 'valuation_api.php', 'valuate', fd);
 
             btnRunAi.disabled    = false;
             btnRunAi.textContent = '🤖 Chạy AI Định Giá';
@@ -217,7 +219,7 @@
             btnConfirm.disabled    = true;
             btnConfirm.textContent = '⏳ Đang xử lý...';
 
-            const res = await Api.post('valuation_api.php', 'confirm_purchase', fd);
+            const res = await Api.post(API_BASE + 'valuation_api.php', 'confirm_purchase', fd);
 
             btnConfirm.disabled    = false;
             btnConfirm.textContent = '✅ Chốt thu mua & Nhập kho';
@@ -245,7 +247,7 @@
             const fd = new FormData();
             fd.append('session_id', currentSessionId);
 
-            const res = await Api.post('valuation_api.php', 'decline', fd);
+            const res = await Api.post(API_BASE + 'valuation_api.php', 'decline', fd);
 
             if (!res.ok) {
                 alert('Lỗi: ' + (res.msg || 'Không thể cập nhật.'));
@@ -344,7 +346,7 @@
             <tr><td colspan="8" class="text-center text-muted py-4">Đang tải dữ liệu...</td></tr>
         `;
 
-        const res = await Api.get('inventory_api.php', 'list');
+        const res = await Api.get(API_BASE + 'inventory_api.php', 'list');
 
         if (!res.ok || !Array.isArray(res.data)) {
             invTableBody.innerHTML = `
@@ -406,7 +408,7 @@
                 this.disabled = true;
 
                 // Api.postJson gửi JSON body → inventory_api.php đọc php://input
-                const res = await Api.postJson('inventory_api.php', 'update_status', {
+                const res = await Api.postJson(API_BASE + 'inventory_api.php', 'update_status', {
                     imei:   imei,
                     status: status,
                 });
@@ -462,7 +464,7 @@
             <tr><td colspan="8" class="text-center text-muted py-4">Đang tải dữ liệu...</td></tr>
         `;
 
-        const res = await Api.get('valuation_api.php', 'history');
+        const res = await Api.get(API_BASE + 'valuation_api.php', 'history');
 
         if (!res.ok || !Array.isArray(res.data)) {
             historyTableBody.innerHTML = `
@@ -550,7 +552,7 @@
     async function loadStaffDashboard() {
         if (!dashTbody && !cardToday) return;
 
-        const res = await Api.get('staff_dashboard_api.php', 'get_metrics');
+        const res = await Api.get(API_BASE + 'staff_dashboard_api.php', 'get_metrics');
 
         if (!res.ok) {
             if (dashTbody) {

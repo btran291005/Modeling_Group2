@@ -1,7 +1,7 @@
 // ============================================================
 // FILE: assets/js/admin_app.js
 // Quản lý Admin — Tài khoản + Kho + Lịch sử + Dashboard + AI Rules
-// Phụ thuộc: assets/js/api.js (object Api)
+// Phụ thuộc: assets/api.js (object Api)
 // ============================================================
 'use strict';
 
@@ -10,6 +10,8 @@
     // ══════════════════════════════════════════════════════════
     // SHARED HELPERS
     // ══════════════════════════════════════════════════════════
+
+    const API_BASE = '../api/';
 
     const ROLE_BADGES = {
         'Admin': '<span class="badge bg-primary">👑 Admin</span>',
@@ -66,7 +68,7 @@
         fd.append('page',          '1');
         fd.append('per_page',      '50');
 
-        const res = await Api.post('account_api.php', 'get_list', fd);
+        const res = await Api.post(API_BASE + 'account_api.php', 'get_list', fd);
 
         if (!res.success || !Array.isArray(res.users)) {
             tbodyAccounts.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">${Api.esc(res.message || 'Không thể tải danh sách tài khoản.')}</td></tr>`;
@@ -113,7 +115,7 @@
     if (formCreate) {
         formCreate.addEventListener('submit', async function (e) {
             e.preventDefault();
-            const res = await Api.post('account_api.php', 'create', new FormData(formCreate));
+            const res = await Api.post(API_BASE + 'account_api.php', 'create', new FormData(formCreate));
 
             if (res.success) {
                 alert(res.message || 'Tạo tài khoản thành công.');
@@ -138,7 +140,7 @@
                 this.disabled = true;
                 const fd = new FormData();
                 fd.append('user_id', id);
-                const res = await Api.post('account_api.php', 'toggle_status', fd);
+                const res = await Api.post(API_BASE + 'account_api.php', 'toggle_status', fd);
                 this.disabled = false;
 
                 if (res.success) {
@@ -171,7 +173,7 @@
     if (formReset) {
         formReset.addEventListener('submit', async function (e) {
             e.preventDefault();
-            const res = await Api.post('account_api.php', 'reset_password', new FormData(formReset));
+            const res = await Api.post(API_BASE + 'account_api.php', 'reset_password', new FormData(formReset));
 
             if (res.success) {
                 alert(res.message || 'Đổi mật khẩu thành công.');
@@ -201,7 +203,7 @@
         if (!adminInvTbody) return;
 
         adminInvTbody.innerHTML = `<tr><td colspan="10" class="text-center text-muted py-4">Đang tải dữ liệu...</td></tr>`;
-        const res = await Api.get('inventory_api.php', 'admin_list');
+        const res = await Api.get(API_BASE + 'inventory_api.php', 'admin_list');
 
         if (!res.ok || !Array.isArray(res.data)) {
             adminInvTbody.innerHTML = `<tr><td colspan="10" class="text-center text-danger py-4">${Api.esc(res.msg || 'Không thể tải dữ liệu kho.')}</td></tr>`;
@@ -277,7 +279,7 @@
                 this.disabled = true;
                 this.textContent = '⏳ Đang xóa...';
 
-                const res = await Api.postJson('inventory_api.php', 'delete', { imei: imei });
+                const res = await Api.postJson(API_BASE + 'inventory_api.php', 'delete', { imei: imei });
 
                 if (res.ok) {
                     alert(res.msg || 'Đã xóa thiết bị thành công.');
@@ -333,7 +335,7 @@
         if (!adminHistoryTbody) return;
 
         adminHistoryTbody.innerHTML = `<tr><td colspan="10" class="text-center text-muted py-4">Đang tải dữ liệu...</td></tr>`;
-        const res = await Api.get('valuation_api.php', 'all_sessions');
+        const res = await Api.get(API_BASE + 'valuation_api.php', 'all_sessions');
 
         if (!res.ok) {
             adminHistoryTbody.innerHTML = `<tr><td colspan="10" class="text-center text-danger py-4">${Api.esc(res.msg || 'Không thể tải nhật ký định giá.')}</td></tr>`;
@@ -431,7 +433,7 @@
 
         if (!elStaff && !elBrands && !elRecent) return;
 
-        const res = await Api.get('admin_dashboard_api.php', 'get_metrics');
+        const res = await Api.get(API_BASE + 'admin_dashboard_api.php', 'get_metrics');
 
         if (!res.ok) {
             if (elError) elError.classList.remove('d-none');
@@ -514,7 +516,7 @@
         if (!rulesPage.tbody) return;
 
         rulesPage.tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-1"></span>Đang tải...</td></tr>`;
-        const res = await Api.get('ai_rule_api.php', 'list');
+        const res = await Api.get(API_BASE + 'ai_rule_api.php', 'list');
 
         if (!res.ok || !Array.isArray(res.data)) {
             rulesPage.tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">${Api.esc(res.message || 'Không thể tải danh sách quy tắc.')}</td></tr>`;
@@ -571,7 +573,7 @@
         document.querySelectorAll('.btn-rule-toggle').forEach(btn => {
             btn.addEventListener('click', async function () {
                 this.disabled = true;
-                const res = await Api.postJson('ai_rule_api.php', 'toggle', { id: parseInt(this.dataset.id) });
+                const res = await Api.postJson(API_BASE + 'ai_rule_api.php', 'toggle', { id: parseInt(this.dataset.id) });
                 this.disabled = false;
                 if (!res.ok) alert(res.message || 'Đổi trạng thái thất bại.');
                 loadAiRules();
@@ -635,7 +637,7 @@
             const btnSubmit = document.getElementById('btn-rule-submit');
             if (btnSubmit) btnSubmit.disabled = true;
 
-            const res = await Api.postJson('ai_rule_api.php', action, payload);
+            const res = await Api.postJson(API_BASE + 'ai_rule_api.php', action, payload);
 
             if (btnSubmit) btnSubmit.disabled = false;
 
@@ -655,11 +657,185 @@
             const id = parseInt(rulesPage.deleteRuleId.value);
             if (!id) return;
             this.disabled = true;
-            const res = await Api.postJson('ai_rule_api.php', 'delete', { id });
+            const res = await Api.postJson(API_BASE + 'ai_rule_api.php', 'delete', { id });
             this.disabled = false;
             rulesPage.modalDelete?.hide();
             alert(res.message || (res.ok ? 'Đã xóa quy tắc.' : 'Xóa thất bại.'));
             if (res.ok) loadAiRules();
+        });
+    }
+
+
+    // ══════════════════════════════════════════════════════════
+    // SECTION 6: DỮ LIỆU CẤU HÌNH & GIÁ (admin/master_data.php)
+    // ══════════════════════════════════════════════════════════
+
+    const newBrandNameInput = document.getElementById('new-brand-name');
+    const btnAddBrand       = document.getElementById('btn-add-brand');
+    const brandSelectMD     = document.getElementById('brand-select');
+    const modelsTbody       = document.getElementById('models-tbody');
+    const modalAddModelEl   = document.getElementById('modal-add-model');
+    const formAddModel      = document.getElementById('form-add-model');
+    const modelBrandDisplay = document.getElementById('model-brand-display');
+
+    async function loadBrandsForMasterData() {
+        if (!brandSelectMD) return;
+
+        const res = await Api.get(API_BASE + 'master_data_api.php', 'get_brands');
+
+        if (!res.ok || !Array.isArray(res.data)) {
+            brandSelectMD.innerHTML = '<option value="">Lỗi tải danh sách hãng</option>';
+            return;
+        }
+
+        const currentVal = brandSelectMD.value;
+
+        brandSelectMD.innerHTML = '<option value="">-- Chọn hãng --</option>' +
+            res.data.map(b => `<option value="${b.brand_id}">${Api.esc(b.brand_name)} (${b.model_count})</option>`).join('');
+
+        if (currentVal && res.data.some(b => String(b.brand_id) === currentVal)) {
+            brandSelectMD.value = currentVal;
+            loadModelsForBrand(currentVal);
+        }
+    }
+
+    async function loadModelsForBrand(brandId) {
+        if (!modelsTbody) return;
+
+        if (!brandId) {
+            modelsTbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Vui lòng chọn hãng.</td></tr>';
+            return;
+        }
+
+        modelsTbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">Đang tải dữ liệu...</td></tr>`;
+
+        const res = await Api.get(API_BASE + 'master_data_api.php', 'get_models', { brand_id: brandId });
+
+        if (!res.ok || !Array.isArray(res.data)) {
+            modelsTbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">${Api.esc(res.msg || 'Không thể tải dòng máy.')}</td></tr>`;
+            return;
+        }
+
+        if (res.data.length === 0) {
+            modelsTbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Hãng này chưa có dòng máy nào.</td></tr>';
+            return;
+        }
+
+        modelsTbody.innerHTML = res.data.map(m => `
+            <tr data-id="${m.model_id}">
+                <td>${m.model_id}</td>
+                <td>${Api.esc(m.model_name)}</td>
+                <td>${m.ram_gb}GB / ${m.rom_gb}GB</td>
+                <td>
+                    <div class="input-group input-group-sm" style="max-width:220px;">
+                        <input type="number" min="0" step="100000" class="form-control model-price-input" value="${m.base_price}">
+                        <button type="button" class="btn btn-outline-primary btn-save-price" data-id="${m.model_id}">💾</button>
+                    </div>
+                </td>
+                <td class="text-muted small">—</td>
+            </tr>
+        `).join('');
+
+        bindModelPriceSaveButtons();
+    }
+
+    function bindModelPriceSaveButtons() {
+        document.querySelectorAll('.btn-save-price').forEach(btn => {
+            btn.addEventListener('click', async function () {
+                const tr    = this.closest('tr');
+                const input = tr.querySelector('.model-price-input');
+                const modelId   = parseInt(this.dataset.id, 10);
+                const basePrice = parseInt(input.value, 10) || 0;
+
+                this.disabled = true;
+                const res = await Api.postJson(API_BASE + 'master_data_api.php', 'update_price', {
+                    model_id: modelId,
+                    base_price: basePrice,
+                });
+                this.disabled = false;
+
+                if (res.ok) {
+                    alert(res.msg || 'Đã cập nhật giá sàn thành công.');
+                } else {
+                    alert('Lỗi: ' + (res.msg || 'Không thể cập nhật giá sàn.'));
+                }
+            });
+        });
+    }
+
+    if (btnAddBrand) {
+        btnAddBrand.addEventListener('click', async function () {
+            const name = newBrandNameInput ? newBrandNameInput.value.trim() : '';
+            if (!name) {
+                alert('Vui lòng nhập tên hãng.');
+                return;
+            }
+
+            this.disabled = true;
+            const res = await Api.postJson(API_BASE + 'master_data_api.php', 'add_brand', { name });
+            this.disabled = false;
+
+            if (res.ok) {
+                alert(res.msg || 'Đã thêm hãng mới thành công.');
+                if (newBrandNameInput) newBrandNameInput.value = '';
+                loadBrandsForMasterData();
+            } else {
+                alert('Lỗi: ' + (res.msg || 'Không thể thêm hãng mới.'));
+            }
+        });
+    }
+
+    if (brandSelectMD) {
+        brandSelectMD.addEventListener('change', function () {
+            loadModelsForBrand(this.value);
+            if (modelBrandDisplay) {
+                const opt = this.options[this.selectedIndex];
+                modelBrandDisplay.value = opt && opt.value ? opt.textContent.replace(/\s*\(\d+\)$/, '') : '';
+            }
+        });
+    }
+
+    if (modalAddModelEl) {
+        modalAddModelEl.addEventListener('show.bs.modal', function () {
+            if (modelBrandDisplay) {
+                const opt = brandSelectMD.options[brandSelectMD.selectedIndex];
+                modelBrandDisplay.value = opt && opt.value ? opt.textContent.replace(/\s*\(\d+\)$/, '') : '';
+            }
+        });
+    }
+
+    if (formAddModel) {
+        formAddModel.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const brandId = brandSelectMD ? parseInt(brandSelectMD.value, 10) : 0;
+            if (!brandId) {
+                alert('Vui lòng chọn hãng trước khi thêm dòng máy.');
+                return;
+            }
+
+            const name      = document.getElementById('model-name-input').value.trim();
+            const ramGb     = parseInt(document.getElementById('model-ram-input').value, 10) || 0;
+            const romGb     = parseInt(document.getElementById('model-rom-input').value, 10) || 0;
+            const basePrice = parseInt(document.getElementById('model-price-input').value, 10) || 0;
+
+            const res = await Api.postJson(API_BASE + 'master_data_api.php', 'add_model', {
+                brand_id:   brandId,
+                name:       name,
+                base_price: basePrice,
+                ram_gb:     ramGb,
+                rom_gb:     romGb,
+            });
+
+            if (res.ok) {
+                alert(res.msg || 'Đã thêm dòng máy mới thành công.');
+                bootstrap.Modal.getInstance(modalAddModelEl)?.hide();
+                formAddModel.reset();
+                loadBrandsForMasterData();
+                loadModelsForBrand(brandId);
+            } else {
+                alert('Lỗi: ' + (res.msg || 'Không thể thêm dòng máy mới.'));
+            }
         });
     }
 
@@ -670,10 +846,11 @@
 
     const path = window.location.pathname;
 
-    if (path.includes('accounts'))  loadAccounts();
-    if (path.includes('inventory')) loadAdminInventory();
-    if (path.includes('history'))   loadGlobalHistory();
-    if (path.includes('dashboard')) loadDashboardMetrics();
-    if (path.includes('ai_rules'))  loadAiRules();
+    if (path.includes('accounts'))    loadAccounts();
+    if (path.includes('inventory'))   loadAdminInventory();
+    if (path.includes('history'))     loadGlobalHistory();
+    if (path.includes('dashboard'))   loadDashboardMetrics();
+    if (path.includes('ai_rules'))    loadAiRules();
+    if (path.includes('master_data')) loadBrandsForMasterData();
 
 }());
