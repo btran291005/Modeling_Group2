@@ -35,7 +35,7 @@ renderHeader('Quy tắc định giá AI');
         <div class="card text-center h-100">
             <div class="card-body py-3">
                 <div class="small text-muted text-uppercase">Tổng quy tắc</div>
-                <div class="fs-3 fw-bold text-primary" id="stat-total">—</div>
+                <div class="fs-3 fw-bold text-primary" id="stat-total">–</div>
             </div>
         </div>
     </div>
@@ -44,7 +44,7 @@ renderHeader('Quy tắc định giá AI');
         <div class="card text-center h-100">
             <div class="card-body py-3">
                 <div class="small text-muted text-uppercase">Đang bật</div>
-                <div class="fs-3 fw-bold text-success" id="stat-active">—</div>
+                <div class="fs-3 fw-bold text-success" id="stat-active">–</div>
             </div>
         </div>
     </div>
@@ -53,7 +53,7 @@ renderHeader('Quy tắc định giá AI');
         <div class="card text-center h-100">
             <div class="card-body py-3">
                 <div class="small text-muted text-uppercase">Đã tắt</div>
-                <div class="fs-3 fw-bold text-secondary" id="stat-inactive">—</div>
+                <div class="fs-3 fw-bold text-secondary" id="stat-inactive">–</div>
             </div>
         </div>
     </div>
@@ -62,7 +62,7 @@ renderHeader('Quy tắc định giá AI');
         <div class="card text-center h-100">
             <div class="card-body py-3">
                 <div class="small text-muted text-uppercase">Tổng % trừ (đang bật)</div>
-                <div class="fs-3 fw-bold text-warning" id="stat-total-pct">—</div>
+                <div class="fs-3 fw-bold text-warning" id="stat-total-pct">–</div>
             </div>
         </div>
     </div>
@@ -112,7 +112,7 @@ renderHeader('Quy tắc định giá AI');
             </div>
 
             <div class="modal-body">
-                <!-- id="rule-form" — JS dùng để submit -->
+                <!-- id="rule-form" – JS dùng để submit -->
                 <form id="rule-form" novalidate>
                     <!-- Hidden: chứa ID khi edit, rỗng khi tạo mới -->
                     <input type="hidden" id="rule-id" name="id" value="">
@@ -192,7 +192,7 @@ renderHeader('Quy tắc định giá AI');
 
             <div class="modal-body">
                 <p class="mb-1">Bạn sắp xóa quy tắc:</p>
-                <p class="fw-bold mb-0" id="delete-rule-name">—</p>
+                <p class="fw-bold mb-0" id="delete-rule-name">–</p>
                 <input type="hidden" id="delete-rule-id" value="">
                 <p class="small text-muted mt-2 mb-0">Hành động này không thể hoàn tác.</p>
             </div>

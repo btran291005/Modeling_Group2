@@ -25,7 +25,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // ──────────────────────────────────────────────────────────────────
-// BASE URL — hardcode tên thư mục project
+// BASE URL – hardcode tên thư mục project
 // ──────────────────────────────────────────────────────────────────
 
 define('APP_BASE_URL', '/Modeling');

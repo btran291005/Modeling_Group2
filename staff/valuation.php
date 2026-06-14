@@ -48,15 +48,15 @@ renderHeader('Định giá thiết bị');
                     <div class="row g-2 mb-3">
                         <div class="col-4">
                             <label class="form-label">RAM</label>
-                            <input type="text" id="info-ram" class="form-control" readonly placeholder="—">
+                            <input type="text" id="info-ram" class="form-control" readonly placeholder="–">
                         </div>
                         <div class="col-4">
                             <label class="form-label">ROM</label>
-                            <input type="text" id="info-rom" class="form-control" readonly placeholder="—">
+                            <input type="text" id="info-rom" class="form-control" readonly placeholder="–">
                         </div>
                         <div class="col-4">
                             <label class="form-label">Giá cơ sở</label>
-                            <input type="text" id="info-base-price" class="form-control" readonly placeholder="—">
+                            <input type="text" id="info-base-price" class="form-control" readonly placeholder="–">
                         </div>
                     </div>
 
@@ -69,7 +69,7 @@ renderHeader('Định giá thiết bị');
                                min="1" max="100" value="80" required>
                     </div>
 
-                    <!-- Mức độ trầy xước —
+                    <!-- Mức độ trầy xước –
                          Giá trị được map thành rule_ids tương ứng trong JS
                          và gửi lên API cùng với các rule do Staff tích chọn.
                          0 = không trầy → không thêm rule
@@ -80,7 +80,7 @@ renderHeader('Định giá thiết bị');
                     <div class="mb-3">
                         <label class="form-label">Mức độ trầy xước / ngoại hình</label>
                         <select id="scratch-level" class="form-select">
-                            <option value="0">Như mới — không trầy xước</option>
+                            <option value="0">Như mới – không trầy xước</option>
                             <option value="1">Trầy xước nhẹ</option>
                             <option value="2">Trầy xước nặng / móp nhẹ</option>
                             <option value="3">Vỡ/nứt màn hình hoặc vỏ</option>
@@ -126,7 +126,7 @@ renderHeader('Định giá thiết bị');
 
                 <div class="text-center mb-3">
                     <div class="text-muted text-uppercase small">Giá thu mua đề xuất</div>
-                    <div class="display-6 fw-bold text-primary" id="result-price">—</div>
+                    <div class="display-6 fw-bold text-primary" id="result-price">–</div>
                     <p class="text-muted small mt-2" id="result-reasoning"></p>
                 </div>
 

@@ -89,7 +89,7 @@ class InventoryService
     // ═══════════════════════════════════════════════════════════
 
     /**
-     * getAdminInventory — Toàn bộ thiết bị trong kho cho Admin.
+     * getAdminInventory – Toàn bộ thiết bị trong kho cho Admin.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -129,7 +129,7 @@ class InventoryService
     }
 
     /**
-     * deleteItem — Xóa vĩnh viễn một thiết bị khỏi kho (Admin only).
+     * deleteItem – Xóa vĩnh viễn một thiết bị khỏi kho (Admin only).
      *
      * @param  string $imei
      * @return bool
@@ -165,7 +165,7 @@ class InventoryService
     }
 
     /**
-     * updateItemDetail — Admin sửa thông tin cơ bản của thiết bị.
+     * updateItemDetail – Admin sửa thông tin cơ bản của thiết bị.
      *
      * @param  string $imei
      * @param  array  $data

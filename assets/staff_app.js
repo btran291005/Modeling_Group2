@@ -10,7 +10,7 @@
     const API_BASE = '../api/';
 
     /* ----------------------------------------------------------
-     * DOM REFS — Trang Định giá (valuation.php)
+     * DOM REFS – Trang Định giá (valuation.php)
      * ---------------------------------------------------------- */
     const brandSelect    = document.getElementById('brand-select');
     const modelSelect    = document.getElementById('model-select');
@@ -43,7 +43,7 @@
     let currentPrice     = null;
 
     /* ----------------------------------------------------------
-     * INIT — Load Brands + Active Rules
+     * INIT – Load Brands + Active Rules
      * ---------------------------------------------------------- */
     async function initValuation() {
         if (!brandSelect) return;
@@ -151,12 +151,12 @@
             fd.append('model_id',       parseInt(modelId, 10));
             fd.append('battery_health', parseInt(batteryHealth, 10));
 
-            // scratch_level — giá trị từ dropdown ngoại hình
+            // scratch_level – giá trị từ dropdown ngoại hình
             // Gửi lên để server có thể log hoặc dùng cho logic mở rộng sau này
             const scratchVal = scratchSelect ? parseInt(scratchSelect.value, 10) : 0;
             fd.append('scratch_level', scratchVal);
 
-            // rule_ids[] — multi-value từ checklist
+            // rule_ids[] – multi-value từ checklist
             document.querySelectorAll('.rule-checkbox:checked').forEach(cb => {
                 fd.append('rule_ids[]', parseInt(cb.value, 10));
             });
@@ -366,18 +366,18 @@
             const deviceName = `${Api.esc(item.brand_name || '')} ${Api.esc(item.model_name || '')}`.trim();
             const config     = `${item.ram_gb ?? '-'}GB / ${item.rom_gb ?? '-'}GB`;
             const battery    = (item.battery_health !== undefined && item.battery_health !== null)
-                ? `${item.battery_health}%` : '—';
+                ? `${item.battery_health}%` : '–';
             const price      = Api.vnd(item.price);
             const customer   = item.customer_name
                 ? `${Api.esc(item.customer_name)}<br><small class="text-muted">${Api.esc(item.phone_number || '')}</small>`
-                : '<span class="text-muted">—</span>';
-            const receivedAt = item.received_at || '—';
+                : '<span class="text-muted">–</span>';
+            const receivedAt = item.received_at || '–';
             const imei       = item.imei || '';
 
             return `
                 <tr data-search="${Api.esc((imei + ' ' + deviceName).toLowerCase())}">
-                    <td class="text-monospace">${Api.esc(imei || '—')}</td>
-                    <td>${deviceName || '—'}</td>
+                    <td class="text-monospace">${Api.esc(imei || '–')}</td>
+                    <td>${deviceName || '–'}</td>
                     <td>${config}</td>
                     <td>${battery}</td>
                     <td>${price}</td>
@@ -394,7 +394,7 @@
 
     /**
      * Gắn sự kiện change cho .status-select.
-     * Gửi: { imei, status } — khớp với inventory_api.php case 'update_status'
+     * Gửi: { imei, status } – khớp với inventory_api.php case 'update_status'
      */
     function bindStatusSelectEvents() {
         document.querySelectorAll('.status-select').forEach(sel => {
@@ -484,23 +484,23 @@
             const deviceName  = `${Api.esc(item.brand_name || '')} ${Api.esc(item.model_name || '')}`.trim();
             const config      = `${item.ram_gb ?? '-'}GB / ${item.rom_gb ?? '-'}GB`;
             const battery     = (item.battery_health !== undefined && item.battery_health !== null)
-                ? `${item.battery_health}%` : '—';
+                ? `${item.battery_health}%` : '–';
             const aiPrice     = Api.vnd(item.ai_suggested_price);
             const finalPrice  = (item.final_price !== undefined && item.final_price !== null)
                 ? Api.vnd(item.final_price)
-                : '<span class="text-muted">—</span>';
+                : '<span class="text-muted">–</span>';
             const rules       = item.applied_rules
                 ? Api.esc(item.applied_rules)
-                : '<span class="text-muted">—</span>';
+                : '<span class="text-muted">–</span>';
             const statusBadge = SESSION_STATUS_LABELS[item.final_status]
-                || Api.esc(item.final_status || '—');
-            const createdAt   = item.created_at || '—';
+                || Api.esc(item.final_status || '–');
+            const createdAt   = item.created_at || '–';
             const searchText  = `${createdAt} ${deviceName}`.toLowerCase();
 
             return `
                 <tr data-search="${Api.esc(searchText)}">
                     <td class="text-monospace">${Api.esc(createdAt)}</td>
-                    <td>${deviceName || '—'}</td>
+                    <td>${deviceName || '–'}</td>
                     <td>${config}</td>
                     <td>${battery}</td>
                     <td>${rules}</td>
@@ -570,9 +570,9 @@
 
     function renderDashCards(cards) {
         if (!cards) return;
-        if (cardToday)     cardToday.textContent     = cards.today_sessions  ?? '—';
-        if (cardWeek)      cardWeek.textContent      = cards.week_sessions   ?? '—';
-        if (cardPurchased) cardPurchased.textContent = cards.total_purchased ?? '—';
+        if (cardToday)     cardToday.textContent     = cards.today_sessions  ?? '–';
+        if (cardWeek)      cardWeek.textContent      = cards.week_sessions   ?? '–';
+        if (cardPurchased) cardPurchased.textContent = cards.total_purchased ?? '–';
         if (cardCapital)   cardCapital.textContent   = Api.vnd(cards.total_capital ?? 0);
     }
 
@@ -592,11 +592,11 @@
 
         dashTbody.innerHTML = data.map(item => {
             const deviceName = `${Api.esc(item.brand_name || '')} ${Api.esc(item.model_name || '')}`.trim();
-            const aiPrice    = item.ai_suggested_price != null ? Api.vnd(item.ai_suggested_price) : '—';
+            const aiPrice    = item.ai_suggested_price != null ? Api.vnd(item.ai_suggested_price) : '–';
             const finalPrice = (item.final_status === 'Purchased' && item.final_price != null)
                 ? `<span class="fw-semibold text-success">${Api.vnd(item.final_price)}</span>`
-                : '<span class="text-muted">—</span>';
-            const badge  = DASH_STATUS_BADGES[item.final_status] || Api.esc(item.final_status || '—');
+                : '<span class="text-muted">–</span>';
+            const badge  = DASH_STATUS_BADGES[item.final_status] || Api.esc(item.final_status || '–');
             const imei   = item.imei
                 ? `<span class="font-monospace">${Api.esc(item.imei)}</span>`
                 : '<span class="text-muted fst-italic">Chưa nhập</span>';
@@ -604,8 +604,8 @@
             return `
                 <tr>
                     <td class="text-muted small">${item.session_id}</td>
-                    <td class="small">${Api.esc(item.created_at || '—')}</td>
-                    <td class="fw-semibold small">${deviceName || '—'}</td>
+                    <td class="small">${Api.esc(item.created_at || '–')}</td>
+                    <td class="fw-semibold small">${deviceName || '–'}</td>
                     <td class="small">${imei}</td>
                     <td class="small text-primary">${aiPrice}</td>
                     <td class="small">${finalPrice}</td>

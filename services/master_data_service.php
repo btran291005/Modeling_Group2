@@ -20,7 +20,7 @@ class MasterDataService
 
 
     // ═══════════════════════════════════════════════════════════
-    // getBrands — Lấy danh sách hãng (kèm số dòng máy)
+    // getBrands – Lấy danh sách hãng (kèm số dòng máy)
     // ═══════════════════════════════════════════════════════════
 
     /**
@@ -41,7 +41,7 @@ class MasterDataService
 
 
     // ═══════════════════════════════════════════════════════════
-    // getModels — Lấy danh sách dòng máy (kèm tên hãng), lọc theo brand_id (optional)
+    // getModels – Lấy danh sách dòng máy (kèm tên hãng), lọc theo brand_id (optional)
     // ═══════════════════════════════════════════════════════════
 
     /**
@@ -76,7 +76,7 @@ class MasterDataService
 
 
     // ═══════════════════════════════════════════════════════════
-    // addBrand — Thêm hãng mới
+    // addBrand – Thêm hãng mới
     // ═══════════════════════════════════════════════════════════
 
     /**
@@ -112,7 +112,7 @@ class MasterDataService
 
 
     // ═══════════════════════════════════════════════════════════
-    // addModel — Thêm dòng máy mới (kèm giá sàn)
+    // addModel – Thêm dòng máy mới (kèm giá sàn)
     // ═══════════════════════════════════════════════════════════
 
     /**
@@ -176,7 +176,7 @@ class MasterDataService
 
 
     // ═══════════════════════════════════════════════════════════
-    // updateBasePrice — Cập nhật giá sàn cho dòng máy hiện có
+    // updateBasePrice – Cập nhật giá sàn cho dòng máy hiện có
     // ═══════════════════════════════════════════════════════════
 
     /**

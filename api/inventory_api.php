@@ -145,7 +145,7 @@ switch ($action) {
 
 
     // ══════════════════════════════════════════════════════════
-    // default — action không tồn tại
+    // default – action không tồn tại
     // ══════════════════════════════════════════════════════════
     default:
         $safeAction = htmlspecialchars($action, ENT_QUOTES | ENT_HTML5, 'UTF-8');

@@ -32,7 +32,7 @@ function formatCurrency(int|float $amount): string
  */
 function formatDatetime(string $datetime, bool $showTime = true): string
 {
-    if (empty($datetime)) return '—';
+    if (empty($datetime)) return '–';
     $ts = strtotime($datetime);
     return $showTime
         ? date('d/m/Y H:i', $ts)

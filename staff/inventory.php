@@ -8,7 +8,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/layout.php';
 
-// ✅ Chữ hoa 'Staff' — khớp với giá trị lưu trong DB và session
+// ✅ Chữ hoa 'Staff' – khớp với giá trị lưu trong DB và session
 requireRole('Staff');
 
 renderHeader('Quản lý Kho - Nhân viên');

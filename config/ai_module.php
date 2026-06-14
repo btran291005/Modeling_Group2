@@ -127,7 +127,7 @@ PROMPT;
         curl_close($ch);
 
         if (!$curlErr && $httpCode !== 429) break;
-        error_log("[AI MODULE] Attempt {$attempt} — HTTP {$httpCode}, cURL: {$curlErr}");
+        error_log("[AI MODULE] Attempt {$attempt} – HTTP {$httpCode}, cURL: {$curlErr}");
     }
 
     if ($curlErr) {
@@ -137,7 +137,7 @@ PROMPT;
     }
 
     if ($httpCode === 429) {
-        error_log('[AI MODULE] Rate limited after ' . GEMINI_MAX_RETRIES . ' retries — using fallback.');
+        error_log('[AI MODULE] Rate limited after ' . GEMINI_MAX_RETRIES . ' retries – using fallback.');
         return _fallbackPrice($deviceInfo, $totalDeduction,
             'AI tạm thời quá tải (rate limit). Giá được tính theo công thức dự phòng.');
     }

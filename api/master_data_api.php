@@ -6,7 +6,7 @@ declare(strict_types=1);
 // api/master_data_api.php
 //
 // Endpoint quản lý Dữ liệu nền: Hãng (brands) & Dòng máy (device_models).
-// Admin only — mọi action đều gọi apiRequireAdmin().
+// Admin only – mọi action đều gọi apiRequireAdmin().
 // ══════════════════════════════════════════════════════════════
 
 require_once __DIR__ . '/../config/db_connect.php';
@@ -109,7 +109,7 @@ switch ($action) {
 
 
     // ══════════════════════════════════════════════════════════
-    // default — action không tồn tại
+    // default – action không tồn tại
     // ══════════════════════════════════════════════════════════
     default:
         $safeAction = htmlspecialchars($action, ENT_QUOTES | ENT_HTML5, 'UTF-8');

@@ -20,7 +20,7 @@ class AccountService
 
 
     // ═══════════════════════════════════════════════════════════
-    // getList — Lấy danh sách tài khoản có lọc + phân trang
+    // getList – Lấy danh sách tài khoản có lọc + phân trang
     // ═══════════════════════════════════════════════════════════
 
     /**
@@ -88,7 +88,7 @@ class AccountService
 
 
     // ═══════════════════════════════════════════════════════════
-    // getAllAccounts — Lấy toàn bộ danh sách user (không phân trang)
+    // getAllAccounts – Lấy toàn bộ danh sách user (không phân trang)
     // ═══════════════════════════════════════════════════════════
 
     /**
@@ -107,7 +107,7 @@ class AccountService
 
 
     // ═══════════════════════════════════════════════════════════
-    // create — Tạo tài khoản mới
+    // create – Tạo tài khoản mới
     // ═══════════════════════════════════════════════════════════
 
     /**
@@ -158,7 +158,7 @@ class AccountService
 
 
     // ═══════════════════════════════════════════════════════════
-    // update — Cập nhật thông tin tài khoản
+    // update – Cập nhật thông tin tài khoản
     // ═══════════════════════════════════════════════════════════
 
     /**
@@ -197,7 +197,7 @@ class AccountService
 
 
     // ═══════════════════════════════════════════════════════════
-    // toggleStatus — Khoá / mở khoá tài khoản (đảo trạng thái hiện tại)
+    // toggleStatus – Khoá / mở khoá tài khoản (đảo trạng thái hiện tại)
     // ═══════════════════════════════════════════════════════════
 
     /**
@@ -238,7 +238,7 @@ class AccountService
 
 
     // ═══════════════════════════════════════════════════════════
-    // updateAccountStatus — Set trạng thái tài khoản theo giá trị chỉ định
+    // updateAccountStatus – Set trạng thái tài khoản theo giá trị chỉ định
     // ═══════════════════════════════════════════════════════════
 
     /**
@@ -282,7 +282,7 @@ class AccountService
 
 
     // ═══════════════════════════════════════════════════════════
-    // resetPassword — Reset mật khẩu
+    // resetPassword – Reset mật khẩu
     // ═══════════════════════════════════════════════════════════
 
     /**
@@ -323,7 +323,7 @@ class AccountService
 
 
     // ═══════════════════════════════════════════════════════════
-    // delete — Xoá tài khoản
+    // delete – Xoá tài khoản
     // ═══════════════════════════════════════════════════════════
 
     /**

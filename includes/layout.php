@@ -1,7 +1,7 @@
 <?php
 // ============================================================
 // FILE: includes/layout.php
-// Theme: Bootstrap 5 Native Dark Mode — Cyberpunk Admin Shell
+// Theme: Bootstrap 5 Native Dark Mode – Cyberpunk Admin Shell
 // ============================================================
 
 declare(strict_types=1);
@@ -30,7 +30,7 @@ function renderHeader(string $title): void
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($title) ?> — Smart Gadget AI</title>
+    <title><?= htmlspecialchars($title) ?> – Smart Gadget AI</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root {

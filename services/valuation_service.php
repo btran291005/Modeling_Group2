@@ -90,7 +90,7 @@ class ValuationService
 
 
     // ═══════════════════════════════════════════════════════════
-    // NHÓM 2: ĐỊNH GIÁ AI — valuate()
+    // NHÓM 2: ĐỊNH GIÁ AI – valuate()
     // ═══════════════════════════════════════════════════════════
 
     /**
@@ -136,7 +136,7 @@ class ValuationService
             throw new RuntimeException("Không tìm thấy thiết bị với model_id = {$modelId}.");
         }
 
-        // ── 3. Lọc rule_ids — chỉ giữ rule active trong DB ──
+        // ── 3. Lọc rule_ids – chỉ giữ rule active trong DB ──
         $validRules = [];
         if (!empty($ruleIds)) {
             $placeholders = implode(',', array_fill(0, count($ruleIds), '?'));
@@ -217,7 +217,7 @@ class ValuationService
 
 
     // ═══════════════════════════════════════════════════════════
-    // NHÓM 3: XÁC NHẬN THU MUA — confirmPurchase()
+    // NHÓM 3: XÁC NHẬN THU MUA – confirmPurchase()
     // ═══════════════════════════════════════════════════════════
 
     /**
@@ -340,7 +340,7 @@ class ValuationService
 
 
     // ═══════════════════════════════════════════════════════════
-    // NHÓM 4: TỪ CHỐI — declineSession()
+    // NHÓM 4: TỪ CHỐI – declineSession()
     // ═══════════════════════════════════════════════════════════
 
     /**
@@ -390,7 +390,7 @@ class ValuationService
 
 
     // ═══════════════════════════════════════════════════════════
-    // NHÓM 5: LỊCH SỬ CÁ NHÂN — getHistory()
+    // NHÓM 5: LỊCH SỬ CÁ NHÂN – getHistory()
     // ═══════════════════════════════════════════════════════════
 
     /**
@@ -482,7 +482,7 @@ class ValuationService
 
 
     // ═══════════════════════════════════════════════════════════
-    // NHÓM 6: NHẬT KÝ ĐỊNH GIÁ CÁ NHÂN — getStaffHistory()
+    // NHÓM 6: NHẬT KÝ ĐỊNH GIÁ CÁ NHÂN – getStaffHistory()
     // ═══════════════════════════════════════════════════════════
 
     /**
@@ -529,7 +529,7 @@ class ValuationService
 
 
     // ═══════════════════════════════════════════════════════════
-    // NHÓM 7: NHẬT KÝ TOÀN HỆ THỐNG (Admin) — getAllSessions()
+    // NHÓM 7: NHẬT KÝ TOÀN HỆ THỐNG (Admin) – getAllSessions()
     // ═══════════════════════════════════════════════════════════
 
     /**
@@ -639,7 +639,7 @@ class ValuationService
 
 
     // ═══════════════════════════════════════════════════════════
-    // NHÓM 8: NHẬT KÝ TOÀN HỆ THỐNG — getGlobalValuationLogs()
+    // NHÓM 8: NHẬT KÝ TOÀN HỆ THỐNG – getGlobalValuationLogs()
     // ═══════════════════════════════════════════════════════════
 
     /**

@@ -382,8 +382,8 @@ if (isLoggedIn()) {
                          ============================================================ -->
                     <div class="demo-account-text">
                         <div><b>Demo Account</b></div>
-                        <div>Admin — Tài khoản: <b>admin@test.com</b> | Mật khẩu: <b>admin123</b></div>
-                        <div>Staff — Tài khoản: <b>staff@test.com</b> | Mật khẩu: <b>staff123</b></div>
+                        <div>Admin – Tài khoản: <b>admin@test.com</b> | Mật khẩu: <b>admin123</b></div>
+                        <div>Staff – Tài khoản: <b>staff@test.com</b> | Mật khẩu: <b>staff123</b></div>
                     </div>
                     
                     <div class="mt-5 text-center small text-secondary" style="opacity: 0.5;">

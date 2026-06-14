@@ -76,7 +76,7 @@ class DashboardService
     }
 
     // ----------------------------------------------------------
-    // Top thiết bị "Cần lưu ý" — chỉ tính máy còn trong kho
+    // Top thiết bị "Cần lưu ý" – chỉ tính máy còn trong kho
     // (Stored hoặc Refurbishing), tính điểm ưu tiên tổng hợp từ
     // 3 trọng số rồi sắp theo điểm cao nhất trước:
     //

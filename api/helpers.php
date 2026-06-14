@@ -31,7 +31,7 @@ function json_err(string $msg, int $code = 400, mixed $data = null): never
 }
  
 /**
- * Gửi JSON response thực sự — hàm nội bộ, không gọi từ ngoài.
+ * Gửi JSON response thực sự – hàm nội bộ, không gọi từ ngoài.
  */
 function _send_json(array $payload, int $code): never
 {
@@ -115,7 +115,7 @@ function require_method(string ...$methods): void
 }
  
 // ──────────────────────────────────────────────────────────────
-// 3. GUARD HELPERS (Auth — phụ thuộc auth.php đã được include)
+// 3. GUARD HELPERS (Auth – phụ thuộc auth.php đã được include)
 // ──────────────────────────────────────────────────────────────
  
 /**

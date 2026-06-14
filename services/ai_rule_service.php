@@ -88,7 +88,7 @@ class AiRuleService
     }
 
     // ----------------------------------------------------------
-    // Xóa quy tắc — ném Exception nếu đã có lịch sử sử dụng
+    // Xóa quy tắc – ném Exception nếu đã có lịch sử sử dụng
     // ----------------------------------------------------------
     public function deleteRule(int $id): bool
     {

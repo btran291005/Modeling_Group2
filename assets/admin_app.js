@@ -1,6 +1,6 @@
 // ============================================================
 // FILE: assets/js/admin_app.js
-// Quản lý Admin — Tài khoản + Kho + Lịch sử + Dashboard + AI Rules
+// Quản lý Admin – Tài khoản + Kho + Lịch sử + Dashboard + AI Rules
 // Phụ thuộc: assets/api.js (object Api)
 // ============================================================
 'use strict';
@@ -81,8 +81,8 @@
         }
 
         tbodyAccounts.innerHTML = res.users.map(u => {
-            const roleBadge   = ROLE_BADGES[u.role]     || Api.esc(u.role || '—');
-            const statusBadge = STATUS_BADGES[u.status] || Api.esc(u.status || '—');
+            const roleBadge   = ROLE_BADGES[u.role]     || Api.esc(u.role || '–');
+            const statusBadge = STATUS_BADGES[u.status] || Api.esc(u.status || '–');
             const isActive    = u.status === 'Active';
             const toggleLabel = isActive ? '🔒 Khoá' : '🔓 Mở khoá';
             const toggleClass = isActive ? 'btn-outline-danger' : 'btn-outline-success';
@@ -266,20 +266,20 @@
 
         adminInvTbody.innerHTML = data.map(item => {
             const deviceName   = `${Api.esc(item.brand_name || '')} ${Api.esc(item.model_name || '')}`.trim();
-            const config       = `${item.ram_gb ?? '—'}GB / ${item.rom_gb ?? '—'}GB`;
-            const battery      = item.battery_health != null ? `${item.battery_health}%` : '—';
-            const price        = item.price != null ? fmtVnd(item.price) : '—';
-            const customer     = item.customer_name ? `${Api.esc(item.customer_name)}<br><small class="text-muted">${Api.esc(item.phone_number || '')}</small>` : '<span class="text-muted">—</span>';
-            const staffName    = Api.esc(item.staff_name || '—');
-            const receivedAt   = Api.esc(item.received_at || '—');
-            const statusBadge  = GADGET_STATUS_BADGES[item.status] || Api.esc(item.status || '—');
+            const config       = `${item.ram_gb ?? '–'}GB / ${item.rom_gb ?? '–'}GB`;
+            const battery      = item.battery_health != null ? `${item.battery_health}%` : '–';
+            const price        = item.price != null ? fmtVnd(item.price) : '–';
+            const customer     = item.customer_name ? `${Api.esc(item.customer_name)}<br><small class="text-muted">${Api.esc(item.phone_number || '')}</small>` : '<span class="text-muted">–</span>';
+            const staffName    = Api.esc(item.staff_name || '–');
+            const receivedAt   = Api.esc(item.received_at || '–');
+            const statusBadge  = GADGET_STATUS_BADGES[item.status] || Api.esc(item.status || '–');
             const imei         = item.imei || '';
 
             return `
                 <tr data-imei="${Api.esc(imei)}">
-                    <td class="font-monospace small">${Api.esc(imei || '—')}</td>
+                    <td class="font-monospace small">${Api.esc(imei || '–')}</td>
                     <td>
-                        <div class="fw-semibold">${deviceName || '—'}</div>
+                        <div class="fw-semibold">${deviceName || '–'}</div>
                         <small class="text-muted">#${item.session_id || ''}</small>
                     </td>
                     <td class="small text-muted">${config}</td>
@@ -399,13 +399,13 @@
 
         adminHistoryTbody.innerHTML = data.map(item => {
             const deviceName  = `${Api.esc(item.brand_name || '')} ${Api.esc(item.model_name || '')}`.trim();
-            const config      = `${item.ram_gb ?? '—'}GB / ${item.rom_gb ?? '—'}GB`;
-            const battery     = item.battery_health != null ? `${item.battery_health}%` : '—';
-            const aiPrice     = item.ai_suggested_price != null ? fmtVnd(item.ai_suggested_price) : '—';
-            const finalPrice  = item.final_status === 'Purchased' && item.ai_suggested_price != null ? fmtVnd(item.ai_suggested_price) : '<span class="text-muted">—</span>';
-            const statusBadge = SESSION_STATUS_BADGES[item.final_status] || Api.esc(item.final_status || '—');
-            const staffName   = Api.esc(item.staff_name || '—');
-            const createdAt   = Api.esc(item.created_at || '—');
+            const config      = `${item.ram_gb ?? '–'}GB / ${item.rom_gb ?? '–'}GB`;
+            const battery     = item.battery_health != null ? `${item.battery_health}%` : '–';
+            const aiPrice     = item.ai_suggested_price != null ? fmtVnd(item.ai_suggested_price) : '–';
+            const finalPrice  = item.final_status === 'Purchased' && item.ai_suggested_price != null ? fmtVnd(item.ai_suggested_price) : '<span class="text-muted">–</span>';
+            const statusBadge = SESSION_STATUS_BADGES[item.final_status] || Api.esc(item.final_status || '–');
+            const staffName   = Api.esc(item.staff_name || '–');
+            const createdAt   = Api.esc(item.created_at || '–');
             const imei        = item.imei ? Api.esc(item.imei) : '<span class="text-muted">Chưa nhập</span>';
 
             return `
@@ -420,7 +420,7 @@
                             <span class="small">${staffName}</span>
                         </div>
                     </td>
-                    <td><div class="fw-semibold small">${deviceName || '—'}</div></td>
+                    <td><div class="fw-semibold small">${deviceName || '–'}</div></td>
                     <td class="small text-muted">${config}</td>
                     <td><span class="${getBatteryClass(item.battery_health)}">${battery}</span></td>
                     <td class="font-monospace small">${imei}</td>
@@ -475,7 +475,7 @@
     };
 
     /**
-     * Vẽ donut chart thuần bằng Canvas 2D — không cần thư viện ngoài.
+     * Vẽ donut chart thuần bằng Canvas 2D – không cần thư viện ngoài.
      * @param {HTMLCanvasElement} canvas
      * @param {Array<{label:string, value:number, color:string}>} segments
      */
@@ -590,7 +590,7 @@
     };
 
     /**
-     * Render danh sách thiết bị "Cần lưu ý" — mỗi máy kèm các badge lý do
+     * Render danh sách thiết bị "Cần lưu ý" – mỗi máy kèm các badge lý do
      * (pin yếu / tồn kho lâu / có lỗi hư hại) dựa trên điểm ưu tiên tổng hợp.
      */
     function renderAttentionList(el, data) {
@@ -605,9 +605,9 @@
         }
 
         el.innerHTML = data.map(item => {
-            const deviceName  = `${Api.esc(item.brand_name || '')} ${Api.esc(item.model_name || '')}`.trim() || '—';
-            const statusBadge = GADGET_STATUS_BADGES[item.status] || Api.esc(item.status || '—');
-            const imei        = item.imei ? `<code class="small">${Api.esc(item.imei)}</code>` : '<span class="text-muted small">—</span>';
+            const deviceName  = `${Api.esc(item.brand_name || '')} ${Api.esc(item.model_name || '')}`.trim() || '–';
+            const statusBadge = GADGET_STATUS_BADGES[item.status] || Api.esc(item.status || '–');
+            const imei        = item.imei ? `<code class="small">${Api.esc(item.imei)}</code>` : '<span class="text-muted small">–</span>';
 
             const reasons = Array.isArray(item.reasons) ? item.reasons : [];
             const reasonBadges = reasons.length > 0
@@ -649,7 +649,7 @@
 
         if (!res.ok) {
             if (elError) elError.classList.remove('d-none');
-            [elStaff, elStock, elSold, elSpent].forEach(el => { if (el) el.textContent = '—'; });
+            [elStaff, elStock, elSold, elSpent].forEach(el => { if (el) el.textContent = '–'; });
             if (elLegend)    elLegend.innerHTML    = '<div class="text-center text-danger small py-2">Lỗi tải dữ liệu.</div>';
             if (elAttention) elAttention.innerHTML = '<li class="list-group-item text-center text-danger py-3 px-0 bg-transparent">Lỗi tải dữ liệu.</li>';
             if (elRecent) {
@@ -660,9 +660,9 @@
 
         const { cards, stock_status, attention_devices, recent } = res.data;
 
-        if (elStaff) elStaff.textContent = cards?.total_staff  ?? '—';
-        if (elStock) elStock.textContent = cards?.in_stock      ?? '—';
-        if (elSold)  elSold.textContent  = cards?.total_sold    ?? '—';
+        if (elStaff) elStaff.textContent = cards?.total_staff  ?? '–';
+        if (elStock) elStock.textContent = cards?.in_stock      ?? '–';
+        if (elSold)  elSold.textContent  = cards?.total_sold    ?? '–';
         if (elSpent) elSpent.textContent = fmtVnd(cards?.total_spent ?? 0);
 
         // ---- Donut chart: Trạng thái Kho ----
@@ -687,15 +687,15 @@
                 elRecent.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">Chưa có giao dịch nào.</td></tr>';
             } else {
                 elRecent.innerHTML = recent.map(r => {
-                    const deviceName = `${Api.esc(r.brand_name || '')} ${Api.esc(r.model_name || '')}`.trim() || '—';
+                    const deviceName = `${Api.esc(r.brand_name || '')} ${Api.esc(r.model_name || '')}`.trim() || '–';
                     const imei       = r.imei ? `<code class="small">${Api.esc(r.imei)}</code>` : '<span class="text-muted">Chưa nhập</span>';
-                    const createdAt  = r.created_at ? new Date(r.created_at).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' }) : '—';
-                    const sBadge     = SESSION_STATUS_BADGES[r.final_status] || `<span class="badge bg-secondary">${Api.esc(r.final_status || '—')}</span>`;
+                    const createdAt  = r.created_at ? new Date(r.created_at).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' }) : '–';
+                    const sBadge     = SESSION_STATUS_BADGES[r.final_status] || `<span class="badge bg-secondary">${Api.esc(r.final_status || '–')}</span>`;
                     return `
                         <tr>
                             <td class="text-muted small">${createdAt}</td>
                             <td>${deviceName}</td>
-                            <td>${Api.esc(r.staff_name || '—')}</td>
+                            <td>${Api.esc(r.staff_name || '–')}</td>
                             <td>${imei}</td>
                             <td>${sBadge}</td>
                         </tr>`;
@@ -762,7 +762,7 @@
 
             const toggleBtn = `
                 <button type="button" class="btn btn-sm ${isActive ? 'btn-success' : 'btn-outline-secondary'} btn-rule-toggle"
-                        data-id="${r.id}" title="${isActive ? 'Đang bật — nhấn để tắt' : 'Đang tắt — nhấn để bật'}">
+                        data-id="${r.id}" title="${isActive ? 'Đang bật – nhấn để tắt' : 'Đang tắt – nhấn để bật'}">
                     ${isActive ? '✅ Bật' : '⏸ Tắt'}
                 </button>`;
             const editBtn = `
@@ -949,7 +949,7 @@
                         <button type="button" class="btn btn-outline-primary btn-save-price" data-id="${m.model_id}">💾</button>
                     </div>
                 </td>
-                <td class="text-muted small">—</td>
+                <td class="text-muted small">–</td>
             </tr>
         `).join('');
 
@@ -1058,7 +1058,7 @@
 
 
     // ══════════════════════════════════════════════════════════
-    // INIT — Tự động định tuyến (Routing)
+    // INIT – Tự động định tuyến (Routing)
     // ══════════════════════════════════════════════════════════
 
     const path = window.location.pathname;
