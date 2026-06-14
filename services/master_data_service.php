@@ -11,7 +11,12 @@ declare(strict_types=1);
  */
 class MasterDataService
 {
-    public function __construct(private readonly PDO $pdo) {}
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo)
+    {
+        $this->pdo = $pdo;
+    }
 
 
     // ═══════════════════════════════════════════════════════════
@@ -231,6 +236,6 @@ class MasterDataService
                 ':a' => $action,
                 ':t' => $table,
             ]);
-        } catch (Throwable) {}
+        } catch (Throwable $e) {}
     }
 }

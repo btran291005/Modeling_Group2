@@ -12,7 +12,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../config/db_connect.php';
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../api/helpers.php';
-require_once __DIR__ . '/../services/MasterDataService.php';
+require_once __DIR__ . '/../services/master_data_service.php';
 
 apiRequireAdmin();
 
