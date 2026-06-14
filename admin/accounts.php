@@ -14,66 +14,66 @@ requireRole('Admin');
 renderHeader('Quản lý Tài khoản');
 ?>
 
-<div class="d-flex align-items-center justify-content-between mb-4">
+<div class="d-flex align-items-start justify-content-between mb-4">
     <div>
-        <h2 class="fw-bold mb-1" style="font-size:1.8rem;color:#e6f0fa;letter-spacing:-.3px;">
+        <h2 class="fw-bold mb-1" style="font-size:1.55rem;color:#e6f0fa;letter-spacing:-.3px;">
             👥 Quản lý Tài khoản Nhân viên
         </h2>
-        <p class="mb-0" style="color:#8fa8be;font-size:1rem;">
+        <p class="mb-0" style="color:#8fa8be;font-size:.9rem;">
             Thêm, khoá/mở khoá, cập nhật phân quyền, đổi mật khẩu và xoá tài khoản trong hệ thống.
         </p>
     </div>
     <button type="button"
-            class="btn d-flex align-items-center gap-2"
+            class="btn btn-sm d-flex align-items-center gap-2 mt-1"
             data-bs-toggle="modal" data-bs-target="#modal-create"
             style="background:rgba(13,202,240,.12);border:1px solid rgba(13,202,240,.3);
-                   color:#0dcaf0;font-weight:700;font-size:1rem;padding:10px 20px;border-radius:10px;">
+                   color:#0dcaf0;font-weight:600;font-size:.9rem;padding:8px 16px;border-radius:8px;">
         ➕ Thêm Nhân viên
     </button>
 </div>
 
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
-        <div class="rounded-3 p-3 d-flex align-items-center gap-3"
+        <div class="rounded-3 p-3 d-flex align-items-center gap-3 h-100"
              style="background:rgba(10,16,28,.9);border:1px solid rgba(255,255,255,.07);">
             <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
-                 style="width:44px;height:44px;background:rgba(13,202,240,.1);font-size:1.3rem;">👥</div>
+                 style="width:48px;height:48px;background:rgba(13,202,240,.1);font-size:1.4rem;">👥</div>
             <div>
-                <div style="font-size:.85rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#8fa8be;">Tổng tài khoản</div>
-                <div class="fw-bold" style="font-size:1.8rem;color:#0dcaf0;line-height:1.2;" id="stat-total">–</div>
+                <div style="font-size:.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8fa8be;margin-bottom:4px;">Tổng tài khoản</div>
+                <div class="fw-bold" style="font-size:1.8rem;color:#0dcaf0;line-height:1;" id="stat-total">—</div>
             </div>
         </div>
     </div>
     <div class="col-6 col-md-3">
-        <div class="rounded-3 p-3 d-flex align-items-center gap-3"
+        <div class="rounded-3 p-3 d-flex align-items-center gap-3 h-100"
              style="background:rgba(10,16,28,.9);border:1px solid rgba(255,255,255,.07);">
             <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
-                 style="width:44px;height:44px;background:rgba(32,201,151,.1);font-size:1.3rem;">✅</div>
+                 style="width:48px;height:48px;background:rgba(32,201,151,.1);font-size:1.4rem;">✅</div>
             <div>
-                <div style="font-size:.85rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#8fa8be;">Đang hoạt động</div>
-                <div class="fw-bold" style="font-size:1.8rem;color:#20c997;line-height:1.2;" id="stat-active">–</div>
+                <div style="font-size:.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8fa8be;margin-bottom:4px;">Đang hoạt động</div>
+                <div class="fw-bold" style="font-size:1.8rem;color:#20c997;line-height:1;" id="stat-active">—</div>
             </div>
         </div>
     </div>
     <div class="col-6 col-md-3">
-        <div class="rounded-3 p-3 d-flex align-items-center gap-3"
+        <div class="rounded-3 p-3 d-flex align-items-center gap-3 h-100"
              style="background:rgba(10,16,28,.9);border:1px solid rgba(255,255,255,.07);">
             <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
-                 style="width:44px;height:44px;background:rgba(220,53,69,.1);font-size:1.3rem;">🔒</div>
+                 style="width:48px;height:48px;background:rgba(220,53,69,.1);font-size:1.4rem;">🔒</div>
             <div>
-                <div style="font-size:.85rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#8fa8be;">Đã khoá</div>
-                <div class="fw-bold" style="font-size:1.8rem;color:#f08080;line-height:1.2;" id="stat-locked">–</div>
+                <div style="font-size:.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8fa8be;margin-bottom:4px;">Đã khoá</div>
+                <div class="fw-bold" style="font-size:1.8rem;color:#f08080;line-height:1;" id="stat-locked">—</div>
             </div>
         </div>
     </div>
     <div class="col-6 col-md-3">
-        <div class="rounded-3 p-3 d-flex align-items-center gap-3"
+        <div class="rounded-3 p-3 d-flex align-items-center gap-3 h-100"
              style="background:rgba(10,16,28,.9);border:1px solid rgba(255,255,255,.07);">
             <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
-                 style="width:44px;height:44px;background:rgba(255,193,7,.1);font-size:1.3rem;">👑</div>
+                 style="width:48px;height:48px;background:rgba(255,193,7,.1);font-size:1.4rem;">👑</div>
             <div>
-                <div style="font-size:.85rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#8fa8be;">Quản trị viên</div>
-                <div class="fw-bold" style="font-size:1.8rem;color:#ffc107;line-height:1.2;" id="stat-admin">–</div>
+                <div style="font-size:.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8fa8be;margin-bottom:4px;">Quản trị viên</div>
+                <div class="fw-bold" style="font-size:1.8rem;color:#ffc107;line-height:1;" id="stat-admin">—</div>
             </div>
         </div>
     </div>
@@ -94,12 +94,12 @@ renderHeader('Quản lý Tài khoản');
         <table class="table table-borderless table-hover align-middle mb-0">
             <thead>
                 <tr style="border-bottom:1px solid rgba(255,255,255,.05);">
-                    <th class="px-4 py-3" style="font-size:.95rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(13,202,240,.9);width:72px;">ID</th>
-                    <th class="py-3"      style="font-size:.95rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(13,202,240,.9);min-width:180px;">Họ Tên</th>
-                    <th class="py-3"      style="font-size:.95rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(13,202,240,.9);min-width:200px;">Email</th>
-                    <th class="py-3"      style="font-size:.95rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(13,202,240,.9);width:130px;">Phân quyền</th>
-                    <th class="py-3"      style="font-size:.95rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(13,202,240,.9);width:140px;">Trạng thái</th>
-                    <th class="py-3 pe-4" style="font-size:.95rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(13,202,240,.9);">Thao tác</th>
+                    <th class="px-3 py-3 text-center" style="font-size:.9rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:rgba(13,202,240,.8);width:80px;">ID</th>
+                    <th class="py-3"                  style="font-size:.9rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:rgba(13,202,240,.8);min-width:180px;">Họ Tên</th>
+                    <th class="py-3"                  style="font-size:.9rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:rgba(13,202,240,.8);min-width:200px;">Email</th>
+                    <th class="py-3 text-center"      style="font-size:.9rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:rgba(13,202,240,.8);width:140px;">Phân quyền</th>
+                    <th class="py-3 text-center"      style="font-size:.9rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:rgba(13,202,240,.8);width:150px;">Trạng thái</th>
+                    <th class="px-3 py-3 text-center" style="font-size:.9rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:rgba(13,202,240,.8);width:180px;">Thao tác</th>
                 </tr>
             </thead>
             <tbody id="accounts-tbody">
@@ -118,13 +118,12 @@ renderHeader('Quản lý Tài khoản');
 /* ── Table rows ── */
 #accounts-tbody td {
     font-size: 1rem;
-    color: #c8d8ea; /* Tăng độ sáng text bảng */
+    color: #c8d8ea;
     padding-top: 16px !important;
     padding-bottom: 16px !important;
     border-bottom: 1px solid rgba(255,255,255,.04) !important;
+    vertical-align: middle;
 }
-#accounts-tbody td:first-child { padding-left: 1.5rem !important; }
-#accounts-tbody td:last-child  { padding-right: 1.5rem !important; }
 #accounts-tbody tr:last-child td { border-bottom: none !important; }
 #accounts-tbody tr:hover td { background: rgba(13,202,240,.025) !important; }
 
@@ -136,7 +135,7 @@ renderHeader('Quản lý Tài khoản');
 }
 
 /* ── Action buttons ── */
-.action-strip { display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; }
+.action-strip { display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: nowrap; }
 .btn-act {
     display: inline-flex; align-items: center; justify-content: center;
     width: 38px; height: 38px; padding: 0;
@@ -212,8 +211,8 @@ renderHeader('Quản lý Tài khoản');
                     <div class="mb-1">
                         <label class="form-label">Phân quyền</label>
                         <select name="role" class="form-select">
-                            <option value="Staff">👤 Staff – Nhân viên định giá</option>
-                            <option value="Admin">👑 Admin – Quản trị viên</option>
+                            <option value="Staff">👤 Staff — Nhân viên định giá</option>
+                            <option value="Admin">👑 Admin — Quản trị viên</option>
                         </select>
                     </div>
                 </div>
@@ -255,8 +254,8 @@ renderHeader('Quản lý Tài khoản');
                     <div class="mb-1">
                         <label class="form-label">Phân quyền</label>
                         <select name="role" id="edit-role" class="form-select">
-                            <option value="Staff">👤 Staff – Nhân viên định giá</option>
-                            <option value="Admin">👑 Admin – Quản trị viên</option>
+                            <option value="Staff">👤 Staff — Nhân viên định giá</option>
+                            <option value="Admin">👑 Admin — Quản trị viên</option>
                         </select>
                     </div>
                 </div>
@@ -318,12 +317,12 @@ renderHeader('Quản lý Tài khoản');
                 <p class="mb-2" style="color:#8fa8be;font-size:.95rem;">Bạn sắp xóa tài khoản:</p>
                 <p class="fw-bold mb-3" id="delete-account-email"
                    style="color:#f08080;font-family:'Courier New',monospace;font-size:1rem;
-                          background:rgba(220,53,69,.08);padding:10px 14px;border-radius:8px;word-break:break-all;">–</p>
+                          background:rgba(220,53,69,.08);padding:10px 14px;border-radius:8px;word-break:break-all;">—</p>
                 <input type="hidden" id="delete-account-id" value="">
                 <div class="p-3 rounded-3" style="background:rgba(220,53,69,.06);border:1px solid rgba(220,53,69,.15);">
                     <p class="mb-0" style="color:#c58a9e;line-height:1.6;font-size:.9rem;">
                         Hành động này <strong style="color:#f08080;">không thể hoàn tác</strong>.
-                        Nếu tài khoản đã có phiên định giá, hệ thống sẽ từ chối –
+                        Nếu tài khoản đã có phiên định giá, hệ thống sẽ từ chối —
                         hãy <strong style="color:#ffc107;">khoá</strong> thay vì xóa.
                     </p>
                 </div>
@@ -367,8 +366,8 @@ renderFooter(['../asset/admin_app.js']);
 
     /* ── Build a single table row ── */
     function buildRow(u) {
-        const role       = ROLE_BADGES[u.role]     || Api.esc(u.role   || '–');
-        const status     = STATUS_BADGES[u.status] || Api.esc(u.status || '–');
+        const role       = ROLE_BADGES[u.role]     || Api.esc(u.role   || '—');
+        const status     = STATUS_BADGES[u.status] || Api.esc(u.status || '—');
         const isActive   = u.status === 'Active';
 
         /* Avatar color based on role */
@@ -384,7 +383,7 @@ renderFooter(['../asset/admin_app.js']);
 
         return `
             <tr data-id="${u.user_id}">
-                <td class="px-4">
+                <td class="text-center px-3">
                     <span style="font-size:.9rem;font-weight:700;color:#8fa8be;font-family:'Courier New',monospace;">#${u.user_id}</span>
                 </td>
                 <td>
@@ -400,9 +399,9 @@ renderFooter(['../asset/admin_app.js']);
                         ${Api.esc(u.email)}
                     </span>
                 </td>
-                <td>${role}</td>
-                <td>${status}</td>
-                <td class="pe-4">
+                <td class="text-center">${role}</td>
+                <td class="text-center">${status}</td>
+                <td class="px-3">
                     <div class="action-strip">
                         <button type="button" class="${toggleCls}"
                                 data-id="${u.user_id}" data-email="${Api.esc(u.email)}"
