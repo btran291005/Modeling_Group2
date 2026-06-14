@@ -14,7 +14,7 @@ renderHeader('Quản lý Tài khoản');
 ?>
 
 <h2 class="mb-1">👥 Quản lý Tài khoản Nhân viên</h2>
-<p class="text-muted mb-4">Thêm, khoá/mở khoá và đổi mật khẩu cho các tài khoản trong hệ thống.</p>
+<p class="text-muted mb-4">Thêm, khoá/mở khoá, đổi mật khẩu và xoá tài khoản trong hệ thống.</p>
 
 <div class="d-flex justify-content-end mb-3">
     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal-create">
@@ -114,6 +114,36 @@ renderHeader('Quản lý Tài khoản');
                     <button type="submit" class="btn btn-warning">Đổi mật khẩu</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- ============================================================
+     MODAL: XÁC NHẬN XÓA TÀI KHOẢN
+     ============================================================ -->
+<div class="modal fade" id="modal-delete-account" tabindex="-1" aria-labelledby="modal-delete-account-title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-danger">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="modal-delete-account-title">⚠️ Xác nhận xóa</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-1">Bạn sắp xóa tài khoản:</p>
+                <p class="fw-bold mb-0" id="delete-account-email">—</p>
+                <input type="hidden" id="delete-account-id" value="">
+                <p class="small text-muted mt-2 mb-0">
+                    Hành động này không thể hoàn tác. Nếu tài khoản đã có phiên định giá liên quan,
+                    hệ thống sẽ không cho xóa — hãy khoá tài khoản thay vì xóa.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger btn-sm" id="btn-confirm-delete-account">
+                    Xóa ngay
+                </button>
+            </div>
         </div>
     </div>
 </div>

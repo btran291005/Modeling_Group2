@@ -103,6 +103,10 @@
                                 data-id="${u.user_id}" data-email="${Api.esc(u.email)}">
                             🔑 Đổi mật khẩu
                         </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger btn-delete-account"
+                                data-id="${u.user_id}" data-email="${Api.esc(u.email)}">
+                            🗑 Xóa
+                        </button>
                     </td>
                 </tr>
             `;
@@ -166,6 +170,42 @@
 
                 new bootstrap.Modal(document.getElementById('modal-reset')).show();
             });
+        });
+
+        document.querySelectorAll('.btn-delete-account').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const id    = this.dataset.id;
+                const email = this.dataset.email;
+
+                const elId    = document.getElementById('delete-account-id');
+                const elEmail = document.getElementById('delete-account-email');
+                if (elId)    elId.value = id;
+                if (elEmail) elEmail.textContent = email;
+
+                const modalEl = document.getElementById('modal-delete-account');
+                if (modalEl) new bootstrap.Modal(modalEl).show();
+            });
+        });
+    }
+
+    const btnConfirmDeleteAccount = document.getElementById('btn-confirm-delete-account');
+    if (btnConfirmDeleteAccount) {
+        btnConfirmDeleteAccount.addEventListener('click', async function () {
+            const id = parseInt(document.getElementById('delete-account-id').value, 10);
+            if (!id) return;
+
+            this.disabled = true;
+            const fd = new FormData();
+            fd.append('user_id', id);
+            const res = await Api.post(API_BASE + 'account_api.php', 'delete', fd);
+            this.disabled = false;
+
+            const modalEl = document.getElementById('modal-delete-account');
+            bootstrap.Modal.getInstance(modalEl)?.hide();
+
+            alert(res.message || (res.success ? 'Đã xóa tài khoản.' : 'Xóa tài khoản thất bại.'));
+
+            if (res.success) loadAccounts();
         });
     }
 
