@@ -8,7 +8,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/../config/db_connect.php';
 require_once __DIR__ . '/../includes/auth.php';
-require_once __DIR__ . '/../services/StaffDashboardService.php';
+require_once __DIR__ . '/../services/staff_dashboard_service.php';
 
 apiRequireLogin(); // Nhân viên đăng nhập là được, không cần Admin
 

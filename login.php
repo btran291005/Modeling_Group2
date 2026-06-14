@@ -288,6 +288,22 @@ if (isLoggedIn()) {
             box-shadow: 0 0 25px var(--staff-glow);
             background: #fff;
         }
+
+        /* -------------------------------------------
+           DEMO ACCOUNT TEXT
+           ------------------------------------------- */
+        .demo-account-text {
+            margin-top: 24px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .demo-account-text b {
+            color: var(--text-main);
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -360,6 +376,15 @@ if (isLoggedIn()) {
                             Đăng nhập
                         </button>
                     </form>
+
+                    <!-- ============================================================
+                         DEMO ACCOUNT TEXT
+                         ============================================================ -->
+                    <div class="demo-account-text">
+                        <div><b>Demo Account</b></div>
+                        <div>Admin — Tài khoản: <b>admin@test.com</b> | Mật khẩu: <b>admin123</b></div>
+                        <div>Staff — Tài khoản: <b>staff@test.com</b> | Mật khẩu: <b>staff123</b></div>
+                    </div>
                     
                     <div class="mt-5 text-center small text-secondary" style="opacity: 0.5;">
                         &copy; 2026 Core Infrastructure System. All rights reserved.
@@ -371,28 +396,46 @@ if (isLoggedIn()) {
     </div>
 
     <script>
-        // --- 1. Switch Theme Dynamic Effect ---
+        // --- 1. Switch Theme Dynamic Effect + Auto-fill Demo Account ---
         const tabAdmin = document.getElementById('tab-admin');
         const tabStaff = document.getElementById('tab-staff');
         const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
         const body = document.body;
+
+        // Thông tin tài khoản demo theo vai trò
+        const DEMO_ACCOUNTS = {
+            admin: { email: 'admin@test.com', password: 'admin123' },
+            staff: { email: 'staff@test.com', password: 'staff123' },
+        };
+
+        function fillDemoAccount(role) {
+            const acc = DEMO_ACCOUNTS[role];
+            if (!acc) return;
+            emailInput.value    = acc.email;
+            passwordInput.value = acc.password;
+        }
 
         function updateTheme() {
             if (tabStaff.checked) {
                 body.classList.add('theme-staff');
                 emailInput.placeholder = 'staff@system.com';
+                fillDemoAccount('staff');
             } else {
                 body.classList.remove('theme-staff');
                 emailInput.placeholder = 'admin@system.com';
+                fillDemoAccount('admin');
             }
         }
 
         tabAdmin.addEventListener('change', updateTheme);
         tabStaff.addEventListener('change', updateTheme);
 
+        // Điền sẵn tài khoản demo tương ứng với tab đang chọn khi tải trang
+        updateTheme();
+
         // --- 2. Toggle Password Visibility ---
         const togglePassword = document.getElementById('toggle-password');
-        const passwordInput = document.getElementById('password');
 
         togglePassword.addEventListener('click', function () {
             // Đảo ngược thuộc tính type: password <-> text
