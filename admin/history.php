@@ -82,5 +82,5 @@ renderHeader('Nhật ký Định giá toàn Hệ thống');
 </div>
 
 <?php
-renderFooter(['../assets/admin_app.js']);
+renderFooter();
 ?>
