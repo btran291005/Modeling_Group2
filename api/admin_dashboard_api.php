@@ -18,20 +18,22 @@ switch ($action) {
 
     // ----------------------------------------------------------
     // GET /api/admin_dashboard_api.php?action=get_metrics
-    // Trả về cards + brands + recent activities trong 1 JSON
+    // Trả về cards + stock_status + attention_devices + recent activities trong 1 JSON
     // ----------------------------------------------------------
     case 'get_metrics':
         try {
             $service = new DashboardService($pdo);
 
-            $cards  = $service->getCardMetrics();
-            $brands = $service->getBrandDistribution();
-            $recent = $service->getRecentActivities();
+            $cards            = $service->getCardMetrics();
+            $stockStatus      = $service->getStockStatusDistribution();
+            $attentionDevices = $service->getPriorityAttentionDevices(5);
+            $recent           = $service->getRecentActivities();
 
             json_ok([
-                'cards'  => $cards,
-                'brands' => $brands,
-                'recent' => $recent,
+                'cards'             => $cards,
+                'stock_status'      => $stockStatus,
+                'attention_devices' => $attentionDevices,
+                'recent'            => $recent,
             ]);
         } catch (PDOException $e) {
             json_err('Lỗi truy vấn dữ liệu: ' . $e->getMessage());

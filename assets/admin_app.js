@@ -421,50 +421,227 @@
     // SECTION 4: DASHBOARD METRICS (admin/dashboard.php)
     // ══════════════════════════════════════════════════════════
 
-    async function loadDashboardMetrics() {
-        const elStaff  = document.getElementById('card-total-staff');
-        const elStock  = document.getElementById('card-in-stock');
-        const elSold   = document.getElementById('card-sold');
-        const elSpent  = document.getElementById('card-total-spent');
-        const elBrands = document.getElementById('brands-tbody');
-        const elRecent = document.getElementById('recent-tbody');
-        const elBadge  = document.getElementById('badge-brands');
-        const elError  = document.getElementById('dashboard-error');
+    // Màu sắc cho từng trạng thái thiết bị trong donut chart
+    const STOCK_STATUS_COLORS = {
+        'Stored':       '#0d6efd', // primary (xanh dương)
+        'Refurbishing': '#ffc107', // warning (vàng)
+        'Sold':         '#198754', // success (xanh lá)
+    };
 
-        if (!elStaff && !elBrands && !elRecent) return;
+    const STOCK_STATUS_LABELS_VI = {
+        'Stored':       '📦 Đang lưu kho',
+        'Refurbishing': '🔧 Đang tân trang',
+        'Sold':         '✅ Đã bán',
+    };
+
+    /**
+     * Vẽ donut chart thuần bằng Canvas 2D — không cần thư viện ngoài.
+     * @param {HTMLCanvasElement} canvas
+     * @param {Array<{label:string, value:number, color:string}>} segments
+     */
+    function drawDonutChart(canvas, segments) {
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+
+        // Hỗ trợ màn hình retina/high-DPI
+        const dpr  = window.devicePixelRatio || 1;
+        const size = Math.min(canvas.clientWidth || 220, canvas.clientHeight || 220) || 220;
+
+        canvas.width  = size * dpr;
+        canvas.height = size * dpr;
+        canvas.style.width  = size + 'px';
+        canvas.style.height = size + 'px';
+        ctx.scale(dpr, dpr);
+
+        const cx = size / 2;
+        const cy = size / 2;
+        const radius      = size / 2 - 6;
+        const innerRadius = radius * 0.6;
+
+        ctx.clearRect(0, 0, size, size);
+
+        const total = segments.reduce((sum, s) => sum + s.value, 0);
+
+        if (total === 0) {
+            // Vẽ vòng tròn xám rỗng khi chưa có dữ liệu
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+            ctx.arc(cx, cy, innerRadius, 0, Math.PI * 2, true);
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(255,255,255,0.08)';
+            ctx.fill();
+
+            ctx.fillStyle = '#8a96a3';
+            ctx.font = '600 14px system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Chưa có dữ liệu', cx, cy);
+            return;
+        }
+
+        let startAngle = -Math.PI / 2; // bắt đầu từ vị trí 12 giờ
+
+        segments.forEach(seg => {
+            if (seg.value <= 0) return;
+            const sliceAngle = (seg.value / total) * Math.PI * 2;
+            const endAngle   = startAngle + sliceAngle;
+
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.arc(cx, cy, radius, startAngle, endAngle);
+            ctx.closePath();
+            ctx.fillStyle = seg.color;
+            ctx.fill();
+
+            startAngle = endAngle;
+        });
+
+        // Khoét lỗ giữa để tạo hiệu ứng donut
+        ctx.beginPath();
+        ctx.arc(cx, cy, innerRadius, 0, Math.PI * 2);
+        ctx.fillStyle = getComputedStyle(document.body).backgroundColor || '#121212';
+        ctx.fill();
+
+        // Tổng số ở giữa donut
+        ctx.fillStyle = '#e7eaee';
+        ctx.font = '700 22px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(total), cx, cy - 8);
+
+        ctx.fillStyle = '#8a96a3';
+        ctx.font = '500 11px system-ui, sans-serif';
+        ctx.fillText('thiết bị', cx, cy + 12);
+    }
+
+    /**
+     * Render chú giải (legend) bên dưới donut chart.
+     */
+    function renderStockStatusLegend(el, segments, total) {
+        if (!el) return;
+
+        if (total === 0) {
+            el.innerHTML = '<div class="text-center text-muted small">Chưa có thiết bị nào trong hệ thống.</div>';
+            return;
+        }
+
+        el.innerHTML = segments.map(seg => {
+            const pct = total > 0 ? ((seg.value / total) * 100).toFixed(1) : '0.0';
+            return `
+                <div class="d-flex align-items-center justify-content-between small">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="d-inline-block rounded-circle" style="width:10px;height:10px;background-color:${seg.color};"></span>
+                        <span>${Api.esc(seg.label)}</span>
+                    </div>
+                    <div class="text-end">
+                        <span class="fw-semibold">${seg.value}</span>
+                        <span class="text-muted ms-1">(${pct}%)</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Màu badge cho từng loại lý do "cần lưu ý"
+    const ATTENTION_REASON_BADGES = {
+        'battery':   'bg-danger',
+        'stock_age': 'bg-warning text-dark',
+        'damage':    'bg-secondary',
+    };
+
+    /**
+     * Render danh sách thiết bị "Cần lưu ý" — mỗi máy kèm các badge lý do
+     * (pin yếu / tồn kho lâu / có lỗi hư hại) dựa trên điểm ưu tiên tổng hợp.
+     */
+    function renderAttentionList(el, data) {
+        if (!el) return;
+
+        if (!Array.isArray(data) || data.length === 0) {
+            el.innerHTML = `
+                <li class="list-group-item text-center text-muted py-3 px-0 bg-transparent">
+                    🎉 Không có thiết bị nào cần lưu ý.
+                </li>`;
+            return;
+        }
+
+        el.innerHTML = data.map(item => {
+            const deviceName  = `${Api.esc(item.brand_name || '')} ${Api.esc(item.model_name || '')}`.trim() || '—';
+            const statusBadge = GADGET_STATUS_BADGES[item.status] || Api.esc(item.status || '—');
+            const imei        = item.imei ? `<code class="small">${Api.esc(item.imei)}</code>` : '<span class="text-muted small">—</span>';
+
+            const reasons = Array.isArray(item.reasons) ? item.reasons : [];
+            const reasonBadges = reasons.length > 0
+                ? reasons.map(r => {
+                    const cls = ATTENTION_REASON_BADGES[r.type] || 'bg-secondary';
+                    return `<span class="badge ${cls}">${Api.esc(r.label)}</span>`;
+                }).join(' ')
+                : '<span class="badge bg-light text-muted">Tình trạng tốt</span>';
+
+            return `
+                <li class="list-group-item px-0 bg-transparent">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="fw-semibold small">${deviceName}</div>
+                            <div class="mb-1">${imei} ${statusBadge}</div>
+                            <div class="d-flex flex-wrap gap-1">${reasonBadges}</div>
+                        </div>
+                    </div>
+                </li>
+            `;
+        }).join('');
+    }
+
+    async function loadDashboardMetrics() {
+        const elStaff     = document.getElementById('card-total-staff');
+        const elStock     = document.getElementById('card-in-stock');
+        const elSold      = document.getElementById('card-sold');
+        const elSpent     = document.getElementById('card-total-spent');
+        const elChart     = document.getElementById('stock-status-chart');
+        const elLegend    = document.getElementById('stock-status-legend');
+        const elBadge     = document.getElementById('badge-total-gadgets');
+        const elAttention = document.getElementById('attention-list');
+        const elRecent    = document.getElementById('recent-tbody');
+        const elError     = document.getElementById('dashboard-error');
+
+        if (!elStaff && !elChart && !elRecent) return;
 
         const res = await Api.get(API_BASE + 'admin_dashboard_api.php', 'get_metrics');
 
         if (!res.ok) {
             if (elError) elError.classList.remove('d-none');
             [elStaff, elStock, elSold, elSpent].forEach(el => { if (el) el.textContent = '—'; });
-            [elBrands, elRecent].forEach(el => {
-                if (el) el.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-3">Lỗi tải dữ liệu.</td></tr>';
-            });
+            if (elLegend)    elLegend.innerHTML    = '<div class="text-center text-danger small py-2">Lỗi tải dữ liệu.</div>';
+            if (elAttention) elAttention.innerHTML = '<li class="list-group-item text-center text-danger py-3 px-0 bg-transparent">Lỗi tải dữ liệu.</li>';
+            if (elRecent) {
+                elRecent.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-3">Lỗi tải dữ liệu.</td></tr>';
+            }
             return;
         }
 
-        const { cards, brands, recent } = res.data;
+        const { cards, stock_status, attention_devices, recent } = res.data;
 
         if (elStaff) elStaff.textContent = cards?.total_staff  ?? '—';
         if (elStock) elStock.textContent = cards?.in_stock      ?? '—';
         if (elSold)  elSold.textContent  = cards?.total_sold    ?? '—';
         if (elSpent) elSpent.textContent = fmtVnd(cards?.total_spent ?? 0);
 
-        if (elBrands) {
-            if (!Array.isArray(brands) || brands.length === 0) {
-                elBrands.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3">Chưa có dữ liệu.</td></tr>';
-            } else {
-                elBrands.innerHTML = brands.map((b, i) => `
-                    <tr>
-                        <td class="text-muted">${i + 1}</td>
-                        <td>${Api.esc(b.brand_name)}</td>
-                        <td class="text-end"><span class="badge bg-primary rounded-pill">${b.quantity}</span></td>
-                    </tr>`).join('');
-                if (elBadge) elBadge.textContent = `${brands.length} hãng`;
-            }
-        }
+        // ---- Donut chart: Trạng thái Kho ----
+        const statusList = Array.isArray(stock_status) ? stock_status : [];
+        const segments = statusList.map(s => ({
+            label: STOCK_STATUS_LABELS_VI[s.status] || s.status,
+            value: parseInt(s.quantity, 10) || 0,
+            color: STOCK_STATUS_COLORS[s.status] || '#6c757d',
+        }));
+        const total = segments.reduce((sum, s) => sum + s.value, 0);
 
+        if (elChart) drawDonutChart(elChart, segments);
+        if (elLegend) renderStockStatusLegend(elLegend, segments, total);
+        if (elBadge) elBadge.textContent = `${total} thiết bị`;
+
+        // ---- Thiết bị cần lưu ý ----
+        if (elAttention) renderAttentionList(elAttention, attention_devices);
+
+        // ---- Giao dịch mới nhất ----
         if (elRecent) {
             if (!Array.isArray(recent) || recent.length === 0) {
                 elRecent.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">Chưa có giao dịch nào.</td></tr>';

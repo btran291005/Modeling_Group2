@@ -52,24 +52,112 @@ class DashboardService
     }
 
     // ----------------------------------------------------------
-    // Phân bố thiết bị trong kho theo Hãng (Brand Distribution)
+    // Phân bố thiết bị trong kho theo Trạng thái (Stock Status Distribution)
+    // Dùng cho donut chart: Stored / Refurbishing / Sold
     // ----------------------------------------------------------
-    public function getBrandDistribution(): array
+    public function getStockStatusDistribution(): array
     {
         $stmt = $this->pdo->query("
             SELECT
-                b.brand_name,
-                COUNT(g.imei) AS quantity
-            FROM gadgets g
-            JOIN valuation_sessions vs ON g.session_id  = vs.session_id
-            JOIN device_models      dm ON vs.model_id   = dm.model_id
-            JOIN brands             b  ON dm.brand_id   = b.brand_id
-            WHERE g.status IN ('Stored', 'Refurbishing')
-            GROUP BY b.brand_id, b.brand_name
-            ORDER BY quantity DESC
+                status,
+                COUNT(*) AS quantity
+            FROM gadgets
+            GROUP BY status
+            ORDER BY
+                CASE status
+                    WHEN 'Stored'       THEN 1
+                    WHEN 'Refurbishing' THEN 2
+                    WHEN 'Sold'         THEN 3
+                    ELSE 4
+                END
         ");
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // ----------------------------------------------------------
+    // Top thiết bị "Cần lưu ý" — chỉ tính máy còn trong kho
+    // (Stored hoặc Refurbishing), tính điểm ưu tiên tổng hợp từ
+    // 3 trọng số rồi sắp theo điểm cao nhất trước:
+    //
+    //   - Pin yếu      : (80 - battery_health), tối đa 80 điểm
+    //                     (pin >= 80% thì không bị trừ điểm)
+    //   - Tồn kho lâu  : số ngày kể từ khi nhập kho, tối đa ~60 điểm
+    //                     (mỗi ngày ~2 điểm, cap ở 30 ngày)
+    //   - Lỗi/hư hại   : tổng % khấu trừ từ các rule AI đã áp dụng
+    //                     cho phiên định giá đó (vd: vỡ màn 25%, ...)
+    //
+    // Mỗi máy trả kèm "reasons[]" để hiển thị badge lý do trên UI.
+    // ----------------------------------------------------------
+    public function getPriorityAttentionDevices(int $limit = 5): array
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT
+                g.imei,
+                g.status,
+                g.created_at AS received_at,
+                vs.battery_health,
+                dm.model_name,
+                b.brand_name,
+                DATEDIFF(NOW(), g.created_at) AS days_in_stock,
+                COALESCE((
+                    SELECT SUM(apr.deduction_percent)
+                    FROM session_rule_details srd
+                    JOIN ai_pricing_rules apr ON apr.rule_id = srd.rule_id
+                    WHERE srd.session_id = g.session_id
+                ), 0) AS damage_pct,
+                COALESCE((
+                    SELECT COUNT(*)
+                    FROM session_rule_details srd
+                    WHERE srd.session_id = g.session_id
+                ), 0) AS rule_count
+            FROM gadgets g
+            JOIN valuation_sessions vs ON g.session_id = vs.session_id
+            JOIN device_models      dm ON vs.model_id  = dm.model_id
+            JOIN brands             b  ON dm.brand_id  = b.brand_id
+            WHERE g.status IN ('Stored', 'Refurbishing')
+        ");
+        $stmt->execute();
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($rows as &$row) {
+            $battery = (int) $row['battery_health'];
+            $days    = (int) $row['days_in_stock'];
+            $damage  = (float) $row['damage_pct'];
+
+            // Điểm pin: pin dưới 80% mới bắt đầu tính điểm
+            $batteryScore = max(0, 80 - $battery);
+
+            // Điểm tồn kho: mỗi ngày 2 điểm, tối đa 30 ngày (60 điểm)
+            $stockScore = min($days, 30) * 2;
+
+            // Điểm hư hại: lấy trực tiếp tổng % khấu trừ từ các rule
+            $damageScore = $damage;
+
+            $row['priority_score'] = round($batteryScore + $stockScore + $damageScore, 1);
+
+            // Danh sách lý do để hiển thị badge trên UI
+            $reasons = [];
+            if ($battery < 80) {
+                $reasons[] = ['type' => 'battery', 'label' => "Pin {$battery}%"];
+            }
+            if ($days >= 14) {
+                $reasons[] = ['type' => 'stock_age', 'label' => "Tồn {$days} ngày"];
+            }
+            if ((int) $row['rule_count'] > 0) {
+                $reasons[] = [
+                    'type'  => 'damage',
+                    'label' => "Lỗi: -" . rtrim(rtrim(number_format($damage, 1, '.', ''), '0'), '.') . "%",
+                ];
+            }
+            $row['reasons'] = $reasons;
+        }
+        unset($row);
+
+        // Sắp theo điểm ưu tiên giảm dần, lấy top N
+        usort($rows, fn($a, $b) => $b['priority_score'] <=> $a['priority_score']);
+
+        return array_slice($rows, 0, $limit);
     }
 
     // ----------------------------------------------------------

@@ -79,33 +79,32 @@ renderHeader('Bảng điều khiển Tổng quan');
      ============================================================ -->
 <div class="row g-3">
 
-    <!-- ===== CỘT TRÁI: Thống kê theo Hãng ===== -->
+    <!-- ===== CỘT TRÁI: Biểu đồ trạng thái kho + Pin yếu ===== -->
     <div class="col-md-5">
         <div class="card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <span>📦 Tồn kho theo Hãng</span>
-                <span class="badge bg-secondary" id="badge-brands">—</span>
+                <span>📊 Trạng thái Kho</span>
+                <span class="badge bg-secondary" id="badge-total-gadgets">—</span>
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>#</th>
-                                <th>Hãng</th>
-                                <th class="text-end">Số lượng</th>
-                            </tr>
-                        </thead>
-                        <tbody id="brands-tbody">
-                            <tr>
-                                <td colspan="3" class="text-center text-muted py-4">
-                                    <span class="spinner-border spinner-border-sm me-1"></span>
-                                    Đang tải...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <div class="card-body">
+                <div class="d-flex justify-content-center mb-3">
+                    <canvas id="stock-status-chart" width="220" height="220" style="max-width:220px; max-height:220px;"></canvas>
                 </div>
+                <div id="stock-status-legend" class="d-flex flex-column gap-1 mb-3">
+                    <!-- JS sẽ đổ legend vào đây -->
+                </div>
+
+                <hr>
+
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-semibold small">⚠️ Thiết bị cần lưu ý</span>
+                </div>
+                <ul class="list-group list-group-flush" id="attention-list">
+                    <li class="list-group-item text-center text-muted py-3 px-0">
+                        <span class="spinner-border spinner-border-sm me-1"></span>
+                        Đang tải...
+                    </li>
+                </ul>
             </div>
         </div>
     </div>
